@@ -5,6 +5,8 @@ import FloatingActions from '@/components/FloatingActions'
 import Footer from '@/components/Footer'
 import CartSidebar from '@/components/CartSidebar'
 import { Inter, Space_Grotesk, Playfair_Display } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space' })
@@ -24,6 +26,8 @@ export default function App({ Component, pageProps }) {
     <CurrencyProvider>
       <CartProvider>
         {getLayout(<Component {...pageProps} />)}
+        <Analytics />
+        <SpeedInsights />
       </CartProvider>
     </CurrencyProvider>
   )
