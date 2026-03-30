@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { supabase } from '@/utils/supabase'
 import { getDolarBlue } from '@/utils/dolar'
 import { trackCategoryEvent } from '@/utils/analytics'
+import { useCurrency } from '@/context/CurrencyContext'
 
 export async function getServerSideProps(context) {
   const { categoria } = context.params;
@@ -87,6 +88,7 @@ const getBrand = (name) => {
 export default function CatalogCategory({ category, dbProducts = [], dbSubcategories = [] }) {
   const [filters, setFilters] = useState({ query: '', priceMin: '', priceMax: '', sort: 'relevance', subcategory: '', brand: '', promoOnly: false })
   const [showFilters, setShowFilters] = useState(false)
+  const { getProductPrice, currency, dolarBlue } = useCurrency()
 
   useEffect(() => {
     if (category?.id) {
@@ -116,7 +118,9 @@ export default function CatalogCategory({ category, dbProducts = [], dbSubcatego
       const matchBrand = filters.brand === '' || getBrand(p.name) === filters.brand
       const minP = filters.priceMin === '' ? 0 : Number(filters.priceMin)
       const maxP = filters.priceMax === '' ? 9999999 : Number(filters.priceMax)
-      const matchPrice = (p.price || 0) >= minP && (p.price || 0) <= maxP
+      
+      const currentPrice = getProductPrice(p) || 0;
+      const matchPrice = currentPrice >= minP && currentPrice <= maxP
       const matchPromo = filters.promoOnly ? p.has_promo : true
 
       return matchQuery && matchSub && matchBrand && matchPrice && matchPromo
@@ -131,16 +135,19 @@ export default function CatalogCategory({ category, dbProducts = [], dbSubcatego
     switch (filters.sort) {
       case 'promo-desc':
         list = [...list].sort((a,b) => {
-          const discA = a.has_promo && a.promo_price ? (1 - a.promo_price / (a.originalUsdPrice || a.price_ars || a.price)) : 0
-          const discB = b.has_promo && b.promo_price ? (1 - b.promo_price / (b.originalUsdPrice || b.price_ars || b.price)) : 0
+          const origA = currency === 'USD' ? (a.price_usd || a.price_ars/dolarBlue) : (a.price_ars || a.price_usd*dolarBlue);
+          const origB = currency === 'USD' ? (b.price_usd || b.price_ars/dolarBlue) : (b.price_ars || b.price_usd*dolarBlue);
+          
+          const discA = a.has_promo && origA ? (1 - getProductPrice(a) / origA) : 0
+          const discB = b.has_promo && origB ? (1 - getProductPrice(b) / origB) : 0
           return discB - discA
         })
         break
       case 'price-asc':
-        list = [...list].sort((a,b) => (a.price||0) - (b.price||0))
+        list = [...list].sort((a,b) => getProductPrice(a) - getProductPrice(b))
         break
       case 'price-desc':
-        list = [...list].sort((a,b) => (b.price||0) - (a.price||0))
+        list = [...list].sort((a,b) => getProductPrice(b) - getProductPrice(a))
         break
       case 'name-asc':
         list = [...list].sort((a,b) => a.name.localeCompare(b.name))
@@ -149,7 +156,7 @@ export default function CatalogCategory({ category, dbProducts = [], dbSubcatego
         break
     }
     return list
-  }, [filters, dbProducts])
+  }, [filters, dbProducts, getProductPrice, currency, dolarBlue])
 
   return (
     <div className="home-celeste min-h-screen font-sans text-gray-900 selection:bg-blue-200">
