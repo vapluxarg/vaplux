@@ -1,5 +1,7 @@
+import { getWhatsAppUrl } from '@/utils/whatsapp'
+
 export default function Bundles(){
-  const wa = (msg) => `https://wa.me/5492216703630?text=${encodeURIComponent(msg)}`
+  const wa = (msg) => getWhatsAppUrl(msg)
   return (
     <section className="relative overflow-hidden bg-tech-sky bg-grid noise-overlay">
       <div className="max-w-6xl mx-auto px-4 py-12">

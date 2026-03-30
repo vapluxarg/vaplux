@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import { UserCheck, Wrench, Package, CheckCircle } from 'lucide-react'
+import { getWhatsAppUrl } from '@/utils/whatsapp'
 
 export default function TrabajaConNosotros(){
   const iconMap = {
@@ -42,7 +43,7 @@ export default function TrabajaConNosotros(){
           <p className="text-slate-500 font-medium text-lg max-w-2xl mb-10 leading-relaxed">Buscamos talento para expandir nuestra red. Ofrecemos capacitación continua, un ambiente dinámico y oportunidades reales de carrera.</p>
           
           <div className="flex gap-4 flex-wrap">
-            <a className="btn-cta bg-blue-600 text-white font-black px-8 py-5 rounded-2xl shadow-xl shadow-blue-900/10 hover:bg-blue-700 transition-all hover:-translate-y-1" href="https://wa.me/5492216703630?text=Hola!%20Quiero%20postularme%20a%20Vaplux" target="_blank" rel="noreferrer">Postularme</a>
+            <a className="btn-cta bg-blue-600 text-white font-black px-8 py-5 rounded-2xl shadow-xl shadow-blue-900/10 hover:bg-blue-700 transition-all hover:-translate-y-1" href={getWhatsAppUrl('Hola! Quiero postularme a Vaplux')} target="_blank" rel="noreferrer">Postularme</a>
             <a className="btn-cta bg-white text-slate-900 font-bold px-8 py-5 rounded-2xl border border-slate-200 hover:bg-slate-50 shadow-sm transition-all" href="#oportunidades">Ver vacantes</a>
           </div>
         </div>
@@ -68,7 +69,7 @@ export default function TrabajaConNosotros(){
                 
                 <a 
                   className="w-full bg-slate-50 hover:bg-blue-600 text-slate-900 hover:text-white font-black py-4 rounded-2xl text-center transition-all shadow-sm border border-slate-100" 
-                  href={`https://wa.me/5492216703630?text=Hola!%20Quiero%20postularme:%20${encodeURIComponent(o.t)}`}
+                  href={getWhatsAppUrl(`Hola! Quiero postularme: ${o.t}`)}
                   target="_blank" 
                   rel="noreferrer"
                 >
@@ -102,7 +103,7 @@ export default function TrabajaConNosotros(){
                  <p className="text-slate-500 font-medium mb-10">Si no encontrás una vacante que se ajuste a vos pero creés que podés aportar valor, no dudes en escribirnos.</p>
                  <a 
                    className="w-full bg-blue-600 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-blue-900/10 hover:bg-blue-700 transition-all active:scale-95 group/wa"
-                   href="https://wa.me/5492216703630?text=Hola!%20Quiero%20sumarme%20al%20equipo%20Vaplux" 
+                   href={getWhatsAppUrl('Hola! Quiero sumarme al equipo Vaplux')} 
                    target="_blank" 
                    rel="noreferrer"
                  >

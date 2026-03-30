@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { getWhatsAppUrl } from '@/utils/whatsapp'
 
 export default function CTA(){
   return (
@@ -10,7 +11,7 @@ export default function CTA(){
         <p className="text-slateInk/80 mt-2 max-w-2xl">Tecnología seleccionada y soporte cercano. Tu próximo upgrade empieza acá.</p>
         <div className="mt-6 flex gap-3">
           <Link href="/catalog/" className="btn-cta btn-cta-primary">Explorar ahora</Link>
-          <a href="https://wa.me/5492216703630" target="_blank" rel="noreferrer" className="btn-cta btn-cta-secondary">Hablar por WhatsApp</a>
+          <a href={getWhatsAppUrl()} target="_blank" rel="noreferrer" className="btn-cta btn-cta-secondary">Hablar por WhatsApp</a>
         </div>
       </div>
     </section>

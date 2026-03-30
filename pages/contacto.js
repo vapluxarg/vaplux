@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import { Instagram } from 'lucide-react'
+import { getWhatsAppUrl } from '@/utils/whatsapp'
 
 export default function Contacto(){
   const [nombre, setNombre] = useState('')
@@ -51,7 +52,7 @@ export default function Contacto(){
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <a 
-                href="https://wa.me/?text=Hola%20Vaplux%2C%20necesito%20asesoramiento"
+                href={getWhatsAppUrl('Hola Vaplux, necesito asesoramiento')}
                 target="_blank" rel="noopener noreferrer"
                 className="group bg-white rounded-[2rem] p-8 border border-slate-100 shadow-[0_8px_30px_rgba(0,0,0,0.02)] transition-all hover:shadow-xl hover:-translate-y-1"
               >

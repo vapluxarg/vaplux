@@ -12,6 +12,7 @@ import SpecsSection from '@/components/SpecsSection'
 import StickyBuyBar from '@/components/StickyBuyBar'
 import { Truck, ShieldCheck, FileText, Package } from 'lucide-react'
 import { trackProductEvent } from '@/utils/analytics'
+import { getWhatsAppUrl } from '@/utils/whatsapp'
 
 export async function getServerSideProps({ params }) {
   const { slug } = params;
@@ -70,10 +71,8 @@ export default function ProductPage({ product, related }) {
     trackProductEvent('whatsapp_checkout', p.id)
     const unitPrice = getProductPrice(p)
     const lineTotal = unitPrice * qty
-    const msg = encodeURIComponent(
-      `Hola! Quiero comprar:\n- ${p.name} x${qty} = ${formatPrice(lineTotal)}\n\nTotal: ${formatPrice(lineTotal)}`
-    )
-    window.open(`https://wa.me/5492216703630?text=${msg}`, '_blank')
+    const msg = `Hola, equipo de Vaplux. 👋\n\nMe gustaría recibir más información o avanzar con la compra del siguiente producto:\n\n▪ ${p.name} (Cant: ${qty}) - ${formatPrice(lineTotal)}\n\n💰 *Total estimado:* ${formatPrice(lineTotal)}\n\nQuedo a la espera de los pasos a seguir. ¡Muchas gracias!`
+    window.open(getWhatsAppUrl(msg), '_blank')
   }
 
   // MercadoLibre: fires meli_click event

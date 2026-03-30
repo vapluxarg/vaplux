@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar'
 import Link from 'next/link'
 import { Smartphone, Battery, Plug, Camera, Volume2, Droplets, ShieldCheck, Zap, CheckCircle, DollarSign } from 'lucide-react'
+import { getWhatsAppUrl } from '@/utils/whatsapp'
 
 export default function ReparacionIphones(){
   const iconMap = {
@@ -60,7 +61,7 @@ export default function ReparacionIphones(){
           <p className="text-slate-500 font-medium text-lg max-w-2xl mb-10 leading-relaxed">Ofrecemos el servicio técnico más avanzado del país. Técnicos especializados, repuestos originales y garantía escrita inmediata.</p>
           
           <div className="flex gap-4 flex-wrap">
-            <a className="btn-cta bg-blue-600 text-white font-black px-8 py-5 rounded-2xl shadow-xl shadow-blue-900/10 hover:bg-blue-700 transition-all hover:-translate-y-1" href="https://wa.me/5492216703630?text=Hola,%20necesito%20reparar%20mi%20iPhone" target="_blank" rel="noreferrer">Cotizar ahora</a>
+            <a className="btn-cta bg-blue-600 text-white font-black px-8 py-5 rounded-2xl shadow-xl shadow-blue-900/10 hover:bg-blue-700 transition-all hover:-translate-y-1" href={getWhatsAppUrl('Hola, necesito reparar mi iPhone')} target="_blank" rel="noreferrer">Cotizar ahora</a>
             <a className="btn-cta bg-white text-slate-900 font-bold px-8 py-5 rounded-2xl border border-slate-200 hover:bg-slate-50 shadow-sm transition-all" href="#servicios">Ver servicios</a>
           </div>
         </div>
@@ -90,7 +91,7 @@ export default function ReparacionIphones(){
 
                 <a 
                   className="w-full bg-slate-50 hover:bg-blue-600 text-slate-900 hover:text-white font-black py-4 rounded-2xl text-center transition-all shadow-sm border border-slate-100 flex items-center justify-center gap-3 group/wa" 
-                  href={`https://wa.me/5492216703630?text=Quiero%20cotizar%20${encodeURIComponent(s.title)}`}
+                  href={getWhatsAppUrl(`Quiero cotizar ${s.title}`)}
                   target="_blank" 
                   rel="noreferrer"
                 >

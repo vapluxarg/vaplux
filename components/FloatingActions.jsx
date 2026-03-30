@@ -1,7 +1,8 @@
 import Image from 'next/image'
+import { getWhatsAppUrl } from '@/utils/whatsapp'
 
 export default function FloatingActions(){
-  const wa = 'https://wa.me/5492216703630?text=Hola!%20Quiero%20consultar%20por%20un%20producto%20de%20Vaplux.'
+  const wa = getWhatsAppUrl('Hola! Quiero consultar por un producto de Vaplux.')
   return (
     <div className="fixed right-4 bottom-4 flex flex-col gap-3 z-50">
       <a
