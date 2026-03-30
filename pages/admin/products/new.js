@@ -129,7 +129,7 @@ export default function NewProduct() {
   const filteredCategories = categories.filter(c => c.store === store)
 
   return (
-    <div className="max-w-4xl mx-auto pb-12">
+    <div className="max-w-6xl mx-auto pb-12">
       {/* HEADER */}
       <div className="flex items-center justify-between mb-8">
         <div>

@@ -1,6 +1,7 @@
 import AdminLayout, { useAdmin } from '@/components/admin/AdminLayout'
 import { supabase } from '@/utils/supabase'
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 import {
   PackageCheck, Eye, MessageCircle, ShoppingCart, ExternalLink,
@@ -81,6 +82,7 @@ function groupByDay(events) {
 // ─── Dashboard ─────────────────────────────────────────────────────────────────
 export default function AdminDashboard({ allProducts, allCategories }) {
   const { globalStore } = useAdmin()
+  const router = useRouter()
 
   // Period state
   const [periodDays, setPeriodDays] = useState(7)
@@ -105,6 +107,7 @@ export default function AdminDashboard({ allProducts, allCategories }) {
       .order('created_at', { ascending: true })
 
     setEvents(data || [])
+    await router.replace(router.asPath, undefined, { scroll: false })
     setLoadingEvents(false)
   }
 
