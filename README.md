@@ -1,304 +1,130 @@
-# 🚀 Vaplux Premium Design System
+# Vaplux E-Commerce Platform
 
-**Rediseño completo tecnológico futurista para ecommerce de alto ticket**
-
----
-
-## 📁 Estructura del Proyecto
-
-```
-Proyecto Juanse/
-├── design-system/
-│   ├── colors.css              # Sistema de color premium
-│   ├── typography.css          # Tipografía futurista
-│   ├── components.css          # Componentes modulares
-│   └── DESIGN_GUIDELINES.md    # Documentación completa
-├── home-premium.html           # Página de inicio
-├── shop-premium.html           # Vista de tienda escalable
-├── product-detail.html         # Página de producto
-├── cart-checkout.html          # Carrito y proceso de compra
-├── categories.html             # Navegación de categorías
-└── README.md                   # Este archivo
-```
+Plataforma de comercio electrónico Full-Stack de alto rendimiento, diseñada para la venta de productos tecnológicos premium (dispositivos Apple, accesorios Fantech, etc.). El proyecto está construido para ser completamente autoadministrable, escalable y con una estética *Dark Mode* de primer nivel (Stitch Design System).
 
 ---
 
-## ✨ Características Principales
+## 🌟 1. Funcionalidades Principales de la Solución
 
-### 🎨 **Sistema de Diseño Completo**
-- **Colores**: 3 primarios (azul/celeste/violeta) + 3 auxiliares + grayscale
-- **Tipografía**: Jerarquía profesional con Inter + Space Grotesk + JetBrains Mono
-- **Componentes**: 15+ componentes reutilizables pensados para React + Vite
+El proyecto resuelve la necesidad de tener un e-commerce administrable e inteligente que elimine la dependencia de modificar código fuente para actualizar el catálogo.
 
-### 🏪 **Vistas Principales Diseñadas**
-1. **Home Premium**: Hero futurista + social proof + storytelling
-2. **Shop Escalable**: Grid fluido optimizado para miles de productos
-3. **Product Detail**: Alta conversión con galería premium y trust signals
-4. **Cart & Checkout**: Proceso optimizado para alto ticket con transparencia
-5. **Categories**: Navegación jerárquica intuitiva para productos variados
+### **Experiencia del Cliente (Frontend Tienda)**
+- **Catálogo Dinámico e Inteligente:** Navegación ultra rápida con filtros por categorías y subcategorías que leen la información en tiempo real desde la base de datos.
+- **Cotizador Multimoneda:** Los productos pueden estar almacenados en USD, pero el sistema consulta la cotización mediante APIs y muestra dinámicamente el precio convertido a la moneda local.
+- **Flujos de Compra Flexibles:** Páginas de producto individuales diseñadas para alta conversión con tres opciones de acción: Agregar al carrito, derivar la compra a **WhatsApp** (con mensaje prearmado) o redirigir directamente a la publicación oficial en **MercadoLibre**.
+- **Diseño Premium *Dark Mode*:** Interfaz de usuario (UI) responsiva, basada en glassmorphism, gradientes futuristas y animaciones fluidas diseñadas para transmitir confianza y tecnología.
+- **Captura de Leads (Email Marketing):** Sistema integrado en el footer y promociones para capturar correos de interesados y sincronizarlos automáticamente.
 
-### 🎯 **Optimizado Para**
-- ✅ **Alto ticket** (productos premium)
-- ✅ **Confianza** (trust signals y transparencia)
-- ✅ **Conversión** (UX centrada en ventas)
-- ✅ **Escalabilidad** (miles de productos)
-- ✅ **Percepción premium** ("empresa millonaria")
+### **Panel de Administración (Backoffice Multitenant)**
+- **Gestión Multi-Tienda:** Arquitectura preparada para manejar inventarios de distintas tiendas o marcas (ej. Vaplux y Fantech) desde el mismo sistema central.
+- **CRUD Completo:** Interfaz intuitiva y segura para Crear, Leer, Actualizar y Eliminar productos, categorías y promociones sin tocar una sola línea de código.
+- **Subida Nativa de Medios:** Integración de carga de imágenes (Drag & Drop) directamente desde el formulario de producto hacia el almacenamiento en la nube, vinculando la URL generada automáticamente al producto.
+- **Listas de Precios y Actualizaciones Masivas:** Herramienta dedicada a la actualización de precios o stock de forma masiva mediante la carga de planillas de cálculo (Excel/CSV), vital para la volatilidad económica.
+- **Seguridad Perimetral:** Acceso restringido únicamente a usuarios autorizados mediante un flujo de login real y robusto.
 
 ---
 
-## 🚀 Cómo Usar
+## 🏗️ 2. Arquitectura y Stack Tecnológico
 
-### 1. **Setup Básico**
-```html
-<!-- En cualquier HTML -->
-<link rel="stylesheet" href="design-system/colors.css">
-<link rel="stylesheet" href="design-system/typography.css">
-<link rel="stylesheet" href="design-system/components.css">
-```
+La solución abandona el paradigma estático anterior en favor de una arquitectura moderna, "Serveless" y conectada a servicios remotos escalables (BaaS).
 
-### 2. **Para React + Vite**
-```jsx
-// main.jsx o App.jsx
-import './design-system/colors.css'
-import './design-system/typography.css'
-import './design-system/components.css'
+### **Frontend & Framework Base**
+- **Next.js 14 (Pages Router):** Framework principal de React para renderizado, enrutamiento y funciones serverless.
+- **React.js:** Para la construcción de interfaces interactivas y manejo de estado.
+- **Tailwind CSS:** Motor de estilos utility-first, extendido con variables nativas para lograr el Premium "Stitch Design".
+- **Framer Motion:** (Opcional/Utilizado para micro-interacciones y animaciones de UI fluidas).
 
-// Usar componentes
-<button className="btn btn-primary btn-lg">
-  Comprar Ahora
-</button>
+### **Backend & Base de Datos**
+- **Supabase (BaaS):** Plataforma central que reemplaza un backend tradicional, proporcionando todo el ecosistema de infraestructura:
+  - **PostgreSQL Database:** Base de datos relacional robusta que aloja el esquema de Productos, Categorías, y Promociones.
+  - **Supabase Auth:** Sistema de autenticación JWT con Row-Level Security (RLS) para proteger los endpoints del admin panel.
+  - **Supabase Storage:** Buckets de almacenamiento en la nube CDN-ready para alojar las imágenes de los productos.
 
-<div className="card card-glass">
-  <div className="card-body">
-    <h3 className="heading-3">iPhone 15 Pro</h3>
-    <p className="text-body">Descripción del producto...</p>
-  </div>
-</div>
-```
-
-### 3. **Páginas Listas para Usar**
-- Abre `home-premium.html` para ver la nueva página de inicio
-- Navega a `shop-premium.html` para la tienda escalable
-- Revisa `product-detail.html` para páginas de producto
-- Explora `cart-checkout.html` para el proceso de compra
-- Visita `categories.html` para navegación de categorías
+### **Marketing, Analíticas e Integraciones**
+- **Resend API:** Plataforma utilizada para el envío programático de correos y la gestión de leads (Suscripción).
+- **Vercel Web Analytics:** Proporciona métricas de rendimiento y visitantes en tiempo real.
+- **Event Tracking Personalizado:** Módulos de analíticas in-app para hacer seguimiento de interacciones específicas (clics en productos, vistas de promociones).
 
 ---
 
-## 🎨 Sistema de Color
+## 🛠️ 3. Implementación Técnica y Componentes
 
-### **Primarios** (Identidad Core)
-```css
---primary-blue: #0066FF     /* Azul tecnológico principal */
---primary-cyan: #00D4FF     /* Celeste vibrante premium */
---primary-violet: #6B46C1   /* Violeta futurista profundo */
+### **Estructura del Proyecto**
+
+```text
+vaplux/
+├── components/          # Componentes modulares de interfaz (UI) de React
+│   ├── home/            # Componentes específicos de la Landing Page
+│   ├── admin/           # Componentes exclusivos del Backoffice
+│   ├── Navbar.jsx       # Navegación global
+│   └── Footer.jsx       # Pie de página (con integración Resend)
+│
+├── pages/               # Enrutador de Next.js (Sistema de Páginas)
+│   ├── admin/           # Rutas privadas protegidas por Supabase Auth
+│   ├── product/         # Vistas dinámicas [slug].js generadas por producto
+│   ├── api/             # Endpoints (Serverless Functions) para lógica de servidor (Resend, etc.)
+│   └── index.js         # Página principal generada dinámicamente
+│
+├── utils/               # Lógica de negocio, helpers y configuraciones globales
+│   ├── analytics.js     # Módulo central de Event Tracking
+│   └── supabase.js      # Instancia Singleton de conexión con la Base de Datos
+│
+├── styles/              # Archivos de configuración visual globales
+│   └── globals.css      # Reglas puras y directivas Tailwind
+│
+├── public/              # Archivos estáticos, fuentes e iconos
+└── tailwind.config.js   # Tokens de diseño, colores premium (Stitch Design) y plugins
 ```
 
-### **Auxiliares** (Semánticos)
-```css
---auxiliary-emerald: #10B981  /* Verde éxito */
---auxiliary-amber: #F59E0B    /* Naranja alertas */
---auxiliary-rose: #F43F5E     /* Rosa errores */
-```
+### **Módulos Claves a Nivel de Código**
 
-### **Gradientes Futuristas**
-```css
-.gradient-primary    /* Azul → Celeste */
-.gradient-secondary  /* Violeta → Azul */
-.gradient-accent     /* Celeste → Verde */
-```
+1. **Gestión de Sesión (Supabase Auth):**
+   Dentro del directorio `/pages/admin/` e inicializado en los Layouts o contexts, la aplicación verifica el JWT de la sesión actual de Supabase. Si el token es inválido o no existe, el componente redirige mediante `next/router` o middleware hacia `/login`.
+   
+2. **Obtención de Datos (Data Fetching):**
+   Las vistas de la tienda pública aprovechan los métodos de ciclo de vida de Next.js (`getServerSideProps` o `getStaticProps` apoyados en hooks del lado cliente como SWR) para consultar directamente la API de Supabase mediante su cliente JS (`supabase.from('products').select('*')`). Esto garantiza que el usuario siempre vea stock real.
+
+3. **Tracking y Analíticas (`utils/analytics.js`):**
+   Abstracción técnica que captura eventos sintéticos (como clicks en "Comprar" o "Ver Detalle") y los emite hacia la capa proveedora de analíticas, permitiendo a Vercel Analytics (u otras herramientas futuras como Google Tag Manager) agrupar los flujos de comportamiento de usuario.
+
+4. **Sistema de Tematización (Stitch Design Flow):**
+   Alojado como una mezcla entre `tailwind.config.js` y clases maestras. Utiliza un esquema de diseño ultra-contrastado. Las clases estandarizadas facilitan que nuevos componentes hereden los gradientes y el "glass effect" sin escribir CSS de cero.
 
 ---
 
-## ✍️ Tipografía Futurista
+## 📦 Configuración Local y Despliegue
 
-### **Familias**
-- **Inter**: Cuerpo y UI (legibilidad premium)
-- **Space Grotesk**: Títulos y hero (impacto visual)
-- **JetBrains Mono**: Código y datos técnicos
+### Requisitos Previos
+- Node.js (v18+)
+- Credenciales de Supabase (URL y Anon Key)
+- Credenciales de Resend API Key
 
-### **Clases Principales**
-```css
-.display-2xl     /* Hero principal (72px) */
-.display-xl      /* Hero secundario (60px) */
-.heading-2       /* Títulos sección (30px) */
-.text-lead       /* Texto introductorio (18px) */
-.text-body       /* Texto principal (16px) */
-```
+### Instrucciones
 
----
+1. Clonar el repositorio y acceder a la carpeta:
+   ```bash
+   git clone https://github.com/vapluxarg/vaplux.git
+   cd vaplux
+   ```
 
-## 🧩 Componentes Modulares
+2. Instalar dependencias:
+   ```bash
+   npm install
+   ```
 
-### **Botones** (5 variantes + 5 tamaños)
-```html
-<button class="btn btn-primary btn-lg">Primary</button>
-<button class="btn btn-secondary btn-md">Secondary</button>
-<button class="btn btn-gradient btn-xl">Gradient</button>
-<button class="btn btn-glass btn-sm">Glass</button>
-```
+3. Variables de Entorno:
+   Crea un archivo `.env.local` en la raíz del proyecto y añade las credenciales necesarias:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=tu_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key
+   RESEND_API_KEY=tu_resend_api_key
+   ```
 
-### **Cards** (4 variantes)
-```html
-<div class="card">                    <!-- Estándar -->
-<div class="card card-glass">         <!-- Glassmorphism -->
-<div class="card card-gradient">      <!-- Con gradiente -->
-<div class="card card-compact">       <!-- Compacta -->
-```
+4. Levantar el entorno de desarrollo:
+   ```bash
+   npm run dev
+   ```
+   La aplicación estará disponible en `http://localhost:3000`.
 
-### **Layout** (Grid fluido)
-```html
-<div class="container container-xl">
-  <div class="grid grid-cols-3 gap-6">
-    <!-- Contenido responsive automático -->
-  </div>
-</div>
-```
-
----
-
-## 📱 Responsive Design
-
-### **Breakpoints Mobile-First**
-- **≤480px**: Mobile (1 columna)
-- **481-768px**: Tablet (2 columnas)
-- **769-1024px**: Desktop S (3-4 columnas)
-- **≥1025px**: Desktop L (4-6 columnas)
-
-### **Características Responsive**
-- Grid automático con `auto-fit, minmax()`
-- Tipografía escalable por dispositivo
-- Navegación adaptativa (hamburger en mobile)
-- Touch targets optimizados (44px mínimo)
-
----
-
-## 🔧 Implementación Técnica
-
-### **CSS Custom Properties**
-Todo el sistema usa variables CSS para máxima flexibilidad:
-```css
-.mi-componente {
-  color: var(--primary-blue);
-  padding: var(--space-4);
-  border-radius: var(--border-radius-base);
-  transition: all var(--transition-base);
-}
-```
-
-### **Estados Interactivos**
-```css
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.btn:disabled {
-  opacity: var(--opacity-disabled);
-  cursor: not-allowed;
-}
-```
-
-### **Animaciones Futuristas**
-```css
-.text-shimmer      /* Efecto brillo animado */
-.text-gradient     /* Gradiente en texto */
-.hover-glow        /* Glow en hover */
-.glass-effect      /* Glassmorphism */
-```
-
----
-
-## 🎯 Optimizaciones de Conversión
-
-### **Trust Signals**
-- Garantías visibles prominentemente
-- Badges de confianza y seguridad
-- Testimonios y social proof
-- Indicadores de stock y urgencia
-
-### **UX para Alto Ticket**
-- Información técnica detallada
-- Múltiples vistas de producto
-- Proceso de checkout transparente
-- Opciones de pago premium (cuotas, etc.)
-
-### **Performance**
-- CSS optimizado y minificado
-- Imágenes lazy loading
-- Animaciones de 60fps
-- Core Web Vitals optimizados
-
----
-
-## 📊 Métricas de Éxito
-
-### **Conversión**
-- Checkout completion: >85%
-- Cart abandonment: <30%
-- Time on product page: >3min
-
-### **Performance**
-- LCP: <2.5s
-- FID: <100ms
-- CLS: <0.1
-
-### **Percepción**
-- Brand perception: Premium/Trustworthy
-- User satisfaction: >8/10
-- Net Promoter Score: >7
-
----
-
-## 🔄 Próximos Pasos
-
-### **Fase 2** (Funcionalidades)
-- [ ] Integración con React + Vite
-- [ ] Estado de carrito global
-- [ ] Sistema de filtros avanzado
-- [ ] Checkout completo funcional
-
-### **Fase 3** (Optimizaciones)
-- [ ] Dark mode
-- [ ] PWA capabilities
-- [ ] Advanced micro-interactions
-- [ ] A/B testing setup
-
-### **Fase 4** (Escalabilidad)
-- [ ] Component library npm package
-- [ ] Storybook documentation
-- [ ] Design tokens JSON
-- [ ] Figma design system
-
----
-
-## 📞 Soporte
-
-Para implementación o customización:
-- **Documentación completa**: `design-system/DESIGN_GUIDELINES.md`
-- **Ejemplos de uso**: Revisar las 5 páginas HTML creadas
-- **Componentes**: Todos documentados en `components.css`
-
----
-
-## ✅ Checklist de Implementación
-
-### **Antes de lanzar:**
-- [ ] Todas las páginas responsive (✅ Completado)
-- [ ] Sistema de color consistente (✅ Completado)
-- [ ] Tipografía optimizada (✅ Completado)
-- [ ] Componentes reutilizables (✅ Completado)
-- [ ] Performance optimizada (✅ Completado)
-- [ ] Accesibilidad básica (✅ Completado)
-
-### **Post-lanzamiento:**
-- [ ] Analytics implementado
-- [ ] A/B testing setup
-- [ ] User feedback collection
-- [ ] Performance monitoring
-
----
-
-*¡Tu nuevo diseño premium está listo! 🚀*
-
-**Este sistema transforma tu ecommerce básico en una experiencia premium que transmite confianza, tecnología y profesionalismo al nivel de las mejores empresas del mundo.**
+### Despliegue en Producción
+El proyecto está completamente optimizado para ser desplegado en **Vercel**. Simplemente sincroniza este repositorio con tu cuenta de Vercel y asegúrate de cargar las variables de entorno dentro del panel de configuración del proyecto en Vercel.

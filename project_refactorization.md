@@ -1,21 +1,21 @@
-## FASE 1
+## FASE 1 (✅ Prácticamente Completada)
 
-1. Refactorización estética:
-    a. Rediseñar el home y la sección de productos
+1. Refactorización estética: (✅ COMPLETADO)
+    a. Rediseñar el home y la sección de productos (Stitch Design System Dark Mode)
     b. Generar un componente de promociones
-    c. Acomodar la estructura del proyecto en cuanto a sus estilos
+    c. Acomodar la estructura del proyecto en cuanto a sus estilos (Tailwind)
 
-2. Migración de productos a Base de datos (Supabase)
-    a. Dejar de utilizar un js hardcodeado y generar las tablas correspondientes en supabase con los campos que corresponda
+2. Migración de productos a Base de datos (Supabase): (✅ COMPLETADO)
+    a. Dejar de utilizar un js hardcodeado y generar las tablas correspondientes en supabase con los campos que corresponda (Multi-tenant)
     b. Tambien utilizar Storage para almacenar las imagenes de los productos
     c. Metodos en Server-side para la conexión
 
-3. Creación de un Panel de Administración
-    a. Un panel autenticado para gestionar el stock de productos y promociones
+3. Creación de un Panel de Administración: (✅ COMPLETADO)
+    a. Un panel autenticado (Supabase Auth) para gestionar el stock de productos y promociones
     b. El admin debe poder actualizar, agregar y eliminar productos, modificar precio, cantidades y promociones.
     c. Generación de un excel para la importación masiva de productos y exportación de productos a un excel/PDF
 
-4. Página de producto
+4. Página de producto: (✅ COMPLETADO)
     a. Crear una página en la que se ven los detalles de un producto (puede ser tipo modal) que permita agregarlo al carrito, continuar la compra por WhatsApp o realizarla desde MercadoLibre (para esto uno de los campos de la base debe ser el link de MeLi)
     b. Los precios se cargarán en dólares o pesos y se debe obtener la cotización del dólar en Argentina para realizar la conversión. También debe mostrarse esa cotización actualizada.
 
