@@ -1,10 +1,12 @@
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { TrendingUp, ShoppingCart, ExternalLink, ChevronRight } from 'lucide-react'
+import { useCurrency } from '@/context/CurrencyContext'
 
 import Link from 'next/link'
 
 export default function FeaturedHeroCards({ products = [] }) {
+  const { getProductPrice, formatPrice, formatPromoPrice } = useCurrency()
   if (products.length === 0) return null
 
   // Ensure we only show 3
@@ -57,7 +59,7 @@ export default function FeaturedHeroCards({ products = [] }) {
                 </h3>
                 <div className="mt-3">
                   <span className="text-blue-600 font-black text-xl md:text-2xl">
-                    {product.preferred_currency === 'usd' ? '$' : 'ARS '}{product.preferred_currency === 'usd' ? product.price_usd : product.price_ars}
+                    {product.has_promo && product.promo_price ? formatPromoPrice(product) : formatPrice(getProductPrice(product))}
                   </span>
                 </div>
                 <div className="mt-4 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">

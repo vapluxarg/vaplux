@@ -19,7 +19,7 @@ export async function getServerSideProps() {
   // Fetch top 3 products by popularity for Hero
   const { data: topProducts } = await supabase
     .from('products')
-    .select('id, title, price_ars, price_usd, image_urls, preferred_currency, meli_clicks, added_to_cart_count, slug')
+    .select('id, title, price_ars, price_usd, image_urls, preferred_currency, meli_clicks, added_to_cart_count, slug, has_promo, promo_price')
     .eq('is_active', true)
     .order('added_to_cart_count', { ascending: false })
     .limit(3)

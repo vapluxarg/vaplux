@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import FeaturedHeroCards from './FeaturedHeroCards'
 import { ChevronRight } from 'lucide-react'
+import { useCurrency } from '@/context/CurrencyContext'
 
 export default function HeroVisual({ topProducts = [] }){
+  const { getProductPrice, formatPrice, formatPromoPrice } = useCurrency()
   return (
     <section className="relative w-full min-h-[85vh] md:min-h-[90vh] flex items-start overflow-hidden">
       {/* Sony Xperia Style Aurora Background */}
@@ -84,8 +86,10 @@ export default function HeroVisual({ topProducts = [] }){
 
                       <h3 className="font-bold text-gray-900 truncate">{p.title}</h3>
                       <div className="mt-2 flex items-center justify-between">
-                         <span className="text-blue-600 font-bold">${p.preferred_currency === 'usd' ? p.price_usd : p.price_ars}</span>
-                         <a href={`/product/${p.id}`} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><ChevronRight size={16} /></a>
+                         <span className="text-blue-600 font-bold">
+                           {p.has_promo && p.promo_price ? formatPromoPrice(p) : formatPrice(getProductPrice(p))}
+                         </span>
+                         <a href={`/product/${p.slug || p.id}`} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><ChevronRight size={16} /></a>
                       </div>
                    </div>
                 </div>
