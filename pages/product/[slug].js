@@ -1,178 +1,193 @@
 import Head from 'next/head'
 import Link from 'next/link'
+import { useEffect } from 'react'
 import Navbar from '@/components/Navbar'
-import { products, getProductBySlug, getRelatedProducts } from '@/data/products'
+import { supabase } from '@/utils/supabase'
+import { getDolarBlue } from '@/utils/dolar'
 import { useCart } from '@/context/CartContext'
-import ProductCarousel from '@/components/home/ProductCarousel'
+import { useCurrency } from '@/context/CurrencyContext'
 import ProductGallery from '@/components/ProductGallery'
 import PurchasePanel from '@/components/PurchasePanel'
-import HighlightsGrid from '@/components/HighlightsGrid'
 import SpecsSection from '@/components/SpecsSection'
-import ComparisonTable from '@/components/ComparisonTable'
-import ReviewsSection from '@/components/ReviewsSection'
 import StickyBuyBar from '@/components/StickyBuyBar'
-import BulkPricing from '@/components/BulkPricing'
-import { bulkPricingMap } from '@/data/bulkPricing'
-import { getDisplayUsdPrice } from '@/utils/pricing'
+import { Truck, ShieldCheck, FileText, Package } from 'lucide-react'
+import { trackProductEvent } from '@/utils/analytics'
+
+export async function getServerSideProps({ params }) {
+  const { slug } = params;
+
+  // Buscar producto por su slug
+  const { data: rawProduct, error } = await supabase
+    .from('products')
+    .select('*, categories(name, slug)')
+    .eq('slug', slug)
+    .single();
+
+  if (error || !rawProduct) return { notFound: true }
+
+  const { data: rawRelated } = await supabase
+    .from('products')
+    .select('*, categories(name, slug)')
+    .eq('category_id', rawProduct.category_id)
+    .neq('id', rawProduct.id)
+    .limit(4);
+
+  const dolarBlue = await getDolarBlue();
+
+  const mapProd = (p) => {
+    return {
+      ...p,
+      name: p.title,
+      category: p.categories?.name || 'Vaplux',
+      specs: p.description ? p.description.split('\n') : [],
+      image: p.image_urls?.[0] || null,
+      secondaryImage: p.image_urls?.[1] || null,
+      slug: p.slug || p.id
+    };
+  };
+
+  return {
+    props: {
+      product: mapProd(rawProduct),
+      related: (rawRelated || []).map(mapProd)
+    }
+  }
+}
+
 export default function ProductPage({ product, related }) {
   const { add } = useCart()
+  const { currency, dolarBlue, formatPrice, getProductPrice, formatPromoPrice } = useCurrency()
   const images = [product?.image, product?.secondaryImage].filter(Boolean)
 
-  const themeMap = {
-    'iPhone': {
-      banner: 'from-blue-700 via-blue-600 to-sky-500',
-      ring: 'ring-blue-300',
-      heading: 'text-blue-700',
-      card: 'border-blue-200 bg-blue-50/40'
-    },
-    'Vapes': {
-      banner: 'from-fuchsia-700 via-pink-600 to-rose-500',
-      ring: 'ring-pink-300',
-      heading: 'text-pink-700',
-      card: 'border-pink-200 bg-pink-50/40'
-    },
-    'Electrónica': {
-      banner: 'from-indigo-700 via-violet-600 to-cyan-500',
-      ring: 'ring-indigo-300',
-      heading: 'text-indigo-700',
-      card: 'border-indigo-200 bg-indigo-50/40'
-    },
-    'Varios': {
-      banner: 'from-emerald-700 via-teal-600 to-green-500',
-      ring: 'ring-emerald-300',
-      heading: 'text-emerald-700',
-      card: 'border-emerald-200 bg-emerald-50/40'
-    }
-  }
-  const catTheme = themeMap[product?.category] || { banner: 'from-slate-700 to-slate-500', ring: 'ring-slate-300', heading: 'text-slate-800', card: 'border-slate-200 bg-slate-50/40' }
+  // Track view once per page load (fire-and-forget)
+  useEffect(() => {
+    if (product?.id) trackProductEvent('view', product.id)
+  }, [product?.id])
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Inicio', item: '/' },
-      { '@type': 'ListItem', position: 2, name: product.category, item: '/catalog' },
-      { '@type': 'ListItem', position: 3, name: product.name, item: `/product/${product.slug}` }
-    ]
+  // WhatsApp direct purchase: fires whatsapp_checkout event
+  // (which atomically increments added_to_cart_count + whatsapp_clicks)
+  const handleWhatsApp = (p, qty = 1) => {
+    trackProductEvent('whatsapp_checkout', p.id)
+    const unitPrice = getProductPrice(p)
+    const lineTotal = unitPrice * qty
+    const msg = encodeURIComponent(
+      `Hola! Quiero comprar:\n- ${p.name} x${qty} = ${formatPrice(lineTotal)}\n\nTotal: ${formatPrice(lineTotal)}`
+    )
+    window.open(`https://wa.me/5492216703630?text=${msg}`, '_blank')
   }
 
-  const usdPrice = getDisplayUsdPrice(product)
-  const productJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
-    category: product.category,
-    image: images,
-    offers: {
-      '@type': 'Offer',
-      price: product.category === 'iPhone' ? product.price : (usdPrice || 0),
-      priceCurrency: product.category === 'iPhone' ? 'ARS' : 'USD',
-      availability: 'https://schema.org/InStock'
-    }
+  // MercadoLibre: fires meli_click event
+  const handleMeli = (p) => {
+    trackProductEvent('meli_click', p.id)
   }
 
   return (
-    <div>
+    <div className="home-celeste min-h-screen font-sans selection:bg-blue-500/30 overflow-x-hidden">
       <Head>
-        <title>{`${product.name} · ${product.category} · Vaplux`}</title>
-        <meta name="description" content={Array.isArray(product.specs) && product.specs[0] ? product.specs[0] : `Comprar ${product.name}`} />
-        <link rel="canonical" href={`/product/${product.slug}`} />
-        <meta property="og:title" content={`${product.name} · Vaplux`} />
-        <meta property="og:description" content={Array.isArray(product.specs) && product.specs[0] ? product.specs[0] : `Comprar ${product.name}`} />
-        <meta property="og:image" content={product.image} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+        <title>{`${product.name} · Vaplux`}</title>
       </Head>
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        {/* Hero + Breadcrumb */}
-        <nav className="text-sm text-slate-600 mb-4" role="navigation" aria-label="breadcrumb">
-          <ol className="flex flex-wrap gap-1">
-            <li><Link href="/" className="hover:underline">Inicio</Link></li>
-            <span>/</span>
-            <li><Link href="/catalog" className="hover:underline">{product.category}</Link></li>
-            <span>/</span>
-            <li aria-current="page" className="font-medium">{product.name}</li>
-          </ol>
+      <main className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-12 py-8 lg:py-12">
+        {/* Breadcrumb - More subtle and premium */}
+        <nav className="flex items-center gap-3 text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 overflow-x-auto whitespace-nowrap pb-2">
+          <Link href="/" className="hover:text-blue-600 transition-colors">Inicio</Link>
+          <span className="text-slate-300">/</span>
+          <Link href={`/catalog?category=${product.category?.toLowerCase()}`} className="hover:text-blue-600 transition-colors">{product.category}</Link>
+          <span className="text-slate-300">/</span>
+          <span className="text-slate-900 border-b-2 border-blue-600 pb-0.5">{product.name}</span>
         </nav>
 
-        {/* Barra gradiente por categoría */}
-        <div className={`h-2 rounded-full bg-gradient-to-r ${catTheme.banner} mb-6`} />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+          {/* Gallery Side */}
+          <div className="lg:col-span-7 xl:col-span-8">
+            <div className="lg:sticky lg:top-32 transition-all">
+              <ProductGallery images={images} alt={product.name} />
 
-        {/* Galería + Panel de compra */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          <div className={`rounded-xl ring-1 ${catTheme.ring} p-1 bg-white`}>
-            <ProductGallery images={images} alt={product.name} compact={product.category === 'Vapes'} showThumbnails={false} />
-          </div>
-          <div className="space-y-6">
-            <div className={`rounded-xl ring-1 ${catTheme.ring} bg-white`}>
-              <div className={`h-1 bg-gradient-to-r ${catTheme.banner} rounded-t-xl`} />
-              <div className="p-4">
-                <PurchasePanel product={product} onAdd={add} onBuy={(p, q) => add(p, q)} />
-                {/* Especificaciones a la derecha, debajo de compartir/copiar link */}
-                <SpecsSection specs={product.specs} theme={{ headingClass: catTheme.heading, cardClass: catTheme.card }} />
-                {/* Cuadro de precios mayoristas (si hay tiers) - No mostrar en iPhone */}
-                {product.category !== 'iPhone' && (
-                  <div className="mt-4">
-                    <BulkPricing
-                      tiers={(product.bulkPricing && product.bulkPricing.length > 0) ? product.bulkPricing : (bulkPricingMap[product.slug] || [])}
-                      accent={product.category === 'Electrónica' ? 'indigo' : product.category === 'Varios' ? 'emerald' : 'slate'}
-                    />
-                  </div>
-                )}
+              {/* Specs placed below gallery, similar to ML for better flow */}
+              <div className="hidden lg:block mt-8 pr-10">
+                <SpecsSection specs={product.specs} />
               </div>
             </div>
           </div>
-        </section>
 
-        {/* Destacados */}
-        <HighlightsGrid items={[
-          { icon: '⚡', title: 'Rendimiento', desc: 'Chip de última generación' },
-          { icon: '🔋', title: 'Autonomía', desc: 'Batería de larga duración' },
-          { icon: '🛡️', title: 'Garantía', desc: 'Soporte y cobertura' },
-          { icon: '📶', title: 'Conectividad', desc: '5G / Wi‑Fi 6' }
-        ]} />
+          {/* Purchase Side */}
+          <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-8">
+            <div className="flex flex-col gap-4">
+              <div className="inline-flex w-fit items-center gap-2 px-3 py-1 bg-blue-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-md shadow-lg shadow-blue-500/20">
+                {product.category}
+              </div>
+              <h1 className="text-4xl md:text-5xl xl:text-6xl font-black tracking-tighter text-slate-900 leading-[0.95]">
+                {product.name}
+              </h1>
+            </div>
 
-        {/* Especificaciones movidas al panel derecho */}
+            <div className="relative">
+              <PurchasePanel product={product} onAdd={add} onWhatsApp={handleWhatsApp} onMeli={handleMeli} />
+            </div>
 
-        {/* Comparación */}
-        <ComparisonTable products={related} />
+            {/* Service Highlights */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-6 rounded-[2rem] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center gap-4 group hover:border-blue-200 transition-all">
+                <div className="w-12 h-12 flex items-center justify-center bg-blue-50 text-blue-600 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-all"><Truck size={24} /></div>
+                <div>
+                  <p className="font-black text-slate-900 text-sm tracking-tight">Envío veloz</p>
+                  <p className="text-xs text-slate-500 font-medium tracking-tight">A todo el país</p>
+                </div>
+              </div>
+              <div className="p-6 rounded-[2rem] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center gap-4 group hover:border-emerald-200 transition-all">
+                <div className="w-12 h-12 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all"><ShieldCheck size={24} /></div>
+                <div>
+                  <p className="font-black text-slate-900 text-sm tracking-tight">Seguridad</p>
+                  <p className="text-xs text-slate-500 font-medium tracking-tight">Garantía oficial</p>
+                </div>
+              </div>
+            </div>
 
-        {/* Reseñas y Q&A */}
-        <ReviewsSection reviews={[]} />
+            {/* Mobile Specs (below purchase) */}
+            <div className="lg:hidden">
+              <SpecsSection specs={product.specs} />
+            </div>
+          </div>
+        </div>
 
-        {/* Relacionados */}
-        <section className="mt-12">
-          <ProductCarousel />
-        </section>
+        {/* Related Products Section */}
+        {related && related.length > 0 && (
+          <section className="mt-8 mb-6 relative">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-screen h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+            <div className="pt-8 flex flex-col items-center">
+              <span className="text-blue-600 text-xs font-black uppercase tracking-[0.3em] mb-4">Quizás te guste</span>
+              <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-10 tracking-tighter text-center">También podría interesarte</h2>
 
-        {/* Confianza */}
-        <section className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="card p-4"><p className="font-medium">Garantía oficial</p><p className="text-sm text-slate-600">Comprá con tranquilidad</p></div>
-          <div className="card p-4"><p className="font-medium">Soporte experto</p><p className="text-sm text-slate-600">Te ayudamos a elegir</p></div>
-          <div className="card p-4"><p className="font-medium">Calidad comprobada</p><p className="text-sm text-slate-600">Inspección y verificación</p></div>
-        </section>
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {related.map(p => (
+                  <div key={p.id} className="group relative">
+                    <Link href={`/product/${p.slug}`} className="block">
+                      <div className="aspect-square bg-white rounded-[2rem] p-6 mb-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-slate-100 flex items-center justify-center relative overflow-hidden group-hover:shadow-xl group-hover:-translate-y-2 transition-all duration-500">
+                        <img
+                          src={p.image}
+                          alt={p.name}
+                          className="object-contain max-w-full max-h-full transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition-colors" />
+                      </div>
+                      <div className="px-2 text-center">
+                        <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mb-1">{p.category}</p>
+                        <h3 className="font-bold text-slate-900 text-lg mb-2 line-clamp-1">{p.name}</h3>
+                        <p className="font-black text-slate-900 text-2xl tracking-tighter">
+                          {p.has_promo ? formatPromoPrice(p) : formatPrice(getProductPrice(p))}
+                        </p>
+                      </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
-      {/* Barra sticky móvil */}
-      <StickyBuyBar product={product} onAdd={add} />
+      <StickyBuyBar product={product} onAdd={add} onWhatsApp={handleWhatsApp} />
     </div>
   )
-}
-
-export async function getStaticPaths() {
-  const paths = products.map((p) => ({ params: { slug: p.slug } }))
-  return { paths, fallback: false }
-}
-
-export async function getStaticProps({ params }) {
-  const product = getProductBySlug(params.slug)
-  if (!product) {
-    return { notFound: true }
-  }
-  const related = getRelatedProducts(product.category, product.id)
-  return {
-    props: { product, related }
-  }
 }

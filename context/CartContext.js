@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { trackProductEvent } from '@/utils/analytics'
 
 const CartContext = createContext(null)
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([])
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isBouncing, setIsBouncing] = useState(false)
 
   useEffect(() => {
     try {
@@ -23,10 +25,18 @@ export function CartProvider({ children }) {
     setItems(prev => {
       const idx = prev.findIndex(p => p.id === product.id)
       if (idx >= 0) {
+        // Already in cart — just bump qty, don't re-fire analytics
         const next = [...prev]
         next[idx] = { ...next[idx], qty: next[idx].qty + qty }
         return next
       }
+      // New item → fire analytics event
+      trackProductEvent('cart_add', product.id)
+      
+      // Trigger animation
+      setIsBouncing(true)
+      setTimeout(() => setIsBouncing(false), 600)
+
       return [...prev, { ...product, qty }]
     })
   }
@@ -49,10 +59,11 @@ export function CartProvider({ children }) {
   const ctx = useMemo(() => ({
     ...value,
     sidebarOpen,
+    isBouncing,
     openCart,
     closeCart,
     toggleCart,
-  }), [value, sidebarOpen])
+  }), [value, sidebarOpen, isBouncing])
 
   return <CartContext.Provider value={ctx}>{children}</CartContext.Provider>
 }

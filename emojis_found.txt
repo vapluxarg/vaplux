@@ -1,0 +1,72 @@
+pages\contacto.js:61:<span>📷</span>
+pages\admin\bulk.js:105:<span className="text-sm">💵</span> <span className="text-xs">Precio Fijo USD</span>
+pages\admin\bulk.js:109:<span className="text-sm">🇦🇷</span> <span className="text-xs">Precio Fijo ARS</span>
+pages\admin\bulk.js:113:<span className="text-sm">📦</span> <span className="text-xs">Stock Físico</span>
+pages\admin\index.js:13:<span className="text-slate-500 text-xs font-bold uppercase tracking-wider">👁️ Total Vistas (Mes)</span>
+pages\admin\index.js:17:<span className="text-slate-500 text-xs font-bold uppercase tracking-wider">💬 Consultas WhatsApp</span>
+pages\admin\index.js:24:<h3 className="text-sm font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 flex items-center gap-2"><span>📊</span> Productos más populares (Top 3)</h3>
+pages\admin\categories\index.js:178:<span className="text-xs">🛒 Vaplux</span>
+pages\admin\categories\index.js:182:<span className="text-xs">🍎 Fantech</span>
+pages\admin\categories\index.js:210:<h3 className="text-xs font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 flex items-center gap-2"><span>📂</span> Subcategorías</h3>
+pages\admin\categories\index.js:273:<button onClick={() => handleDelete(c.id)} className="text-red-500 hover:text-red-700 mx-1" title="Eliminar">🗑️</button>
+pages\admin\products\index.js:165:<button onClick={() => setShowExportModal(true)} className="text-xs bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-sm font-semibold transition-colors flex items-center gap-1">📥 Exportar Lista</button>
+pages\admin\products\index.js:196:<span className="text-slate-400 text-[10px]">📦</span>
+pages\admin\products\index.js:227:<button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-700" title="Eliminar">🗑️</button>
+pages\admin\products\index.js:244:<h2 className="text-base font-bold text-slate-800 flex items-center gap-2"><span>📥</span> Exportar Lista de Precios</h2>
+pages\admin\products\index.js:285:<span>📄</span> Descargar CSV
+pages\admin\products\index.js:291:<span>📸</span> Generar Imagen
+pages\admin\products\new.js:159:<h2 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2"><span>📝</span> Información Principal</h2>
+pages\admin\products\new.js:167:<span className="text-sm">🛒 Vaplux</span>
+pages\admin\products\new.js:171:<span className="text-sm">🍎 Fantech</span>
+pages\admin\products\new.js:206:<h2 className="text-sm font-bold text-slate-800 mb-2 pb-2 border-b border-slate-100 flex items-center gap-2"><span>📋</span> Descripción Comercial</h2>
+pages\admin\products\new.js:220:<h2 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2"><span>💸</span> Precios y Cotización</h2>
+pages\admin\products\new.js:251:<h2 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2"><span>📊</span> Operativa</h2>
+pages\admin\products\new.js:269:<h2 className="text-sm font-bold text-slate-800 flex items-center gap-2"><span>📸</span> Multimedia</h2>
+pages\admin\products\new.js:294:<span className="text-lg">🎥</span>
+pages\admin\products\new.js:300:<span className="text-lg text-slate-400">🎥</span>
+pages\admin\products\[id].js:172:<h2 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2"><span>📝</span> Información Principal</h2>
+pages\admin\products\[id].js:180:<span className="text-sm">🛒 Vaplux</span>
+pages\admin\products\[id].js:184:<span className="text-sm">🍎 Fantech</span>
+pages\admin\products\[id].js:219:<h2 className="text-sm font-bold text-slate-800 mb-2 pb-2 border-b border-slate-100 flex items-center gap-2"><span>📋</span> Descripción Comercial</h2>
+pages\admin\products\[id].js:233:<h2 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2"><span>💸</span> Precios y Cotización</h2>
+pages\admin\products\[id].js:264:<h2 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2"><span>📊</span> Operativa</h2>
+pages\admin\products\[id].js:282:<h2 className="text-sm font-bold text-slate-800 flex items-center gap-2"><span>📸</span> Multimedia</h2>
+pages\admin\products\[id].js:307:<span className="text-lg">🎥</span>
+pages\admin\products\[id].js:313:<span className="text-lg text-slate-400">🎥</span>
+pages\product\[slug].js:103:<div className="text-2xl pt-0.5 bg-blue-50 p-2 rounded-2xl">🚚</div>
+pages\product\[slug].js:110:<div className="text-2xl pt-0.5 bg-emerald-50 p-2 rounded-2xl">🛡️</div>
+pages\product\[slug].js:121:<span className="text-blue-500 bg-blue-50 p-2 rounded-xl">📄</span> Especificaciones
+pages\product\[slug].js:140:<div className="text-slate-200 text-4xl">📦</div>
+pages\services\reparacion-iphones.js:5:{ icon: '📱', title: 'Pantalla Completa', price: 'Desde $25.000', items: ['Pantalla original o AAA+', 'Incluye instalación', 'Garantía 6 meses', 'Tiempo: 30 minutos'] },
+pages\services\reparacion-iphones.js:6:{ icon: '🔋', title: 'Cambio de Batería', price: 'Desde $12.000', items: ['Batería original', 'Calibración incluida', 'Garantía 12 meses', 'Tiempo: 20 minutos'] },
+pages\services\reparacion-iphones.js:7:{ icon: '🔌', title: 'Puerto de Carga', price: 'Desde $8.000', items: ['Limpieza profunda', 'Reemplazo si es necesario', 'Garantía 3 meses', 'Tiempo: 15 minutos'] },
+pages\services\reparacion-iphones.js:8:{ icon: '📸', title: 'Cámara', price: 'Desde $15.000', items: ['Cámara original', 'Calibración enfoque', 'Garantía 6 meses', 'Tiempo: 45 minutos'] },
+pages\services\reparacion-iphones.js:9:{ icon: '🔊', title: 'Audio y Altavoces', price: 'Desde $10.000', items: ['Altavoz original', 'Micrófono incluido', 'Garantía 6 meses', 'Tiempo: 30 minutos'] },
+pages\services\reparacion-iphones.js:10:{ icon: '💧', title: 'Daño por Líquidos', price: 'Desde $20.000', items: ['Diagnóstico gratuito', 'Limpieza ultrasónica', 'Garantía según daño', 'Tiempo: 24-48hs'] },
+pages\services\reparacion-iphones.js:22:{ icon:'🛡️', t:'Garantía Extendida', d:'Hasta 12 meses según servicio' },
+pages\services\reparacion-iphones.js:25:{ icon:'💰', t:'Mejor Precio', d:'Relación precio/calidad optimizada' },
+pages\services\trabaja-con-nosotros.js:5:{ icon:'🧑‍💼', t:'Ventas y Atención', d:'Perfil orientado a clientes, manejo de WhatsApp y seguimiento comercial.' },
+pages\services\trabaja-con-nosotros.js:6:{ icon:'🧑‍🔧', t:'Técnico de iPhone', d:'Experiencia en hardware y microsoldadura (deseable). Atención a detalle y calidad.' },
+pages\services\trabaja-con-nosotros.js:7:{ icon:'📦', t:'Logística', d:'Gestión de entregas, control de stock y coordinación con proveedores.' },
+components\FeatureGrid.jsx:3:{ t: 'Garantía y soporte', d: 'Asistencia real por WhatsApp y repuestos.', i: '🛡️' },
+components\FeatureGrid.jsx:4:{ t: 'Pagos claros', d: 'Transferencia y links de pago.', i: '💳' },
+components\FeatureGrid.jsx:5:{ t: 'Entrega coordinada', d: 'Retiro y entrega acordada.', i: '📦' },
+components\Footer.jsx:30:<li><Link className="inline-flex items-center gap-2 hover:underline text-gray-200 hover:text-white" href="/services/reparacion-iphones">🔧 Reparación de iPhones</Link></li>
+components\Footer.jsx:31:<li><Link className="inline-flex items-center gap-2 hover:underline text-gray-200 hover:text-white" href="/services/trabaja-con-nosotros">💼 Trabajá con Nosotros</Link></li>
+components\Navbar.jsx:143:<span className="absolute left-3 text-slate-400 group-focus-within:text-brand transition-colors">🔎</span>
+components\Navbar.jsx:148:<span className="text-xl">🛒</span>
+components\Navbar.jsx:165:<span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔎</span>
+components\Services.jsx:6:icon: '🔧',
+components\Services.jsx:12:icon: '💼',
+components\Services.jsx:18:icon: '🛡️',
+components\admin\AdminLayout.jsx:99:<option value="fantech">Fantech 🍎</option>
+components\admin\AdminLayout.jsx:105:<span className="w-4 text-center">📊</span> Dashboard
+components\admin\AdminLayout.jsx:108:<span className="w-4 text-center">📦</span> Productos
+components\admin\AdminLayout.jsx:114:<span className="w-4 text-center">🏷️</span> Categorías
+components\admin\AdminLayout.jsx:120:<span className="w-4 text-center">🚪</span> Salir
+components\home\ServicesHighlight.jsx:11:<div className="text-2xl">💬</div>
+components\home\ServicesHighlight.jsx:17:<div className="text-2xl">🔧</div>
+components\home\ServicesHighlight.jsx:23:<div className="text-2xl">🛡️</div>
+components\home\TrustBadges.jsx:8:<div className="text-2xl">🚚</div>
+components\home\TrustBadges.jsx:12:<div className="text-2xl">🛡️</div>
+components\home\TrustBadges.jsx:16:<div className="text-2xl">💬</div>

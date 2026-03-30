@@ -1,55 +1,96 @@
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import FeaturedHeroCards from './FeaturedHeroCards'
+import { ChevronRight } from 'lucide-react'
 
-export default function HeroVisual(){
-  const vapRef = useRef(null)
-  const [vapWidth, setVapWidth] = useState(null)
-
-  useEffect(() => {
-    const updateWidth = () => {
-      if (vapRef.current) {
-        const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640
-        setVapWidth(isMobile ? vapRef.current.offsetWidth : null)
-      }
-    }
-    updateWidth()
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', updateWidth)
-      return () => window.removeEventListener('resize', updateWidth)
-    }
-  }, [])
+export default function HeroVisual({ topProducts = [] }){
   return (
-    <section className="relative w-full min-h-[100vh]">
-      <div className="absolute inset-0">
-        {/* Fondo blanco sólido para igualar al de la foto */}
-        <div className="absolute inset-0 bg-white" />
-        {/* Imagen principal respetando aspecto (más alta que ancha) */}
-        <Image
-          src="https://http2.mlstatic.com/D_NQ_NP_2X_870071-MLA99964558223_112025-F.webp"
-          alt="Hero principal"
-          fill
-          className="object-contain object-[100%_center] md:object-[80%_center] scale-90 md:scale-100 origin-right"
-          priority
-          sizes="100vw"
-        />
+    <section className="relative w-full min-h-[85vh] md:min-h-[90vh] flex items-start overflow-hidden">
+      {/* Sony Xperia Style Aurora Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none bg-white">
+        <div className="aurora-bg-v2" />
       </div>
 
-      {/* Overlay limpio con slogan y CTAs, reubicado arriba a la izquierda para evitar solapamiento */}
-      <div className="relative z-10 flex items-start justify-start min-h-[100vh] pt-8 md:pt-16 pb-0">
-        <div className="max-w-xl px-6 md:px-10 text-left translate-x-0">
-          <h1 className="heading text-4xl md:text-6xl font-semibold tracking-tight text-[#0f172a]">
-            Elegí mejor. 
+      <div className="relative z-20 max-w-[1400px] mx-auto px-6 md:px-10 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-start pt-12 md:pt-16 lg:pt-20 pb-0">
+        
+        {/* Left Content: Slogan & CTAs */}
+        <div className="flex flex-col items-start text-left mt-8 md:mt-0">
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter text-[#0f172a] leading-[0.85]">
+            <motion.span 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
+              className="block"
+            >
+              Elegí mejor.
+            </motion.span>
+            <motion.span 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+              className="block"
+            >
+              Elegí <span className="text-vaplux-glow">Vaplux.</span>
+            </motion.span>
           </h1>
-          <h1 className="heading text-4xl md:text-6xl font-semibold tracking-tight text-[#0f172a] inline-block whitespace-nowrap" ref={vapRef}>
-            Elegí Vaplux.
-          </h1>
-          <p className="mt-4 md:mt-5 text-lg md:text-xl text-[#0f172a]/80 block" style={{ width: vapWidth ? `${vapWidth}px` : undefined }}>
-            Productos premium y servicio confiable.
-          </p>
-          <div className="mt-5 md:mt-6 flex items-center gap-3 flex-wrap">
-            <a href="/catalog" className="btn-cta btn-cta-primary">Ver catálogo</a>
-            <a href="/contacto" className="px-5 py-3 rounded-md bg-white/90 text-primary border border-mistGray hover:bg-white transition">Contacto</a>
-          </div>
+          
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="mt-6 md:mt-8 text-lg md:text-xl text-gray-400 font-medium max-w-lg leading-snug md:leading-relaxed"
+          >
+            Encontrá los productos que necesitás, al mejor precio y con el respaldo de un servicio diseñado para vos.
+          </motion.p>
+          
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="mt-10 flex items-center gap-4"
+          >
+            <a href="/catalog" className="group px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold flex items-center gap-2 shadow-xl shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all">
+              Ver catálogo
+              <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </a>
+            <a href="/contacto" className="px-8 py-4 bg-white text-gray-900 border border-gray-100 rounded-2xl font-bold hover:bg-gray-50 transition-all shadow-sm">
+              Contacto
+            </a>
+          </motion.div>
+        </div>
+
+        {/* Right Content: Overlapping Cards */}
+        <div className="relative hidden lg:block animate-reveal" style={{ animationDelay: '0.4s' }}>
+          <FeaturedHeroCards products={topProducts} />
+        </div>
+
+        {/* Mobile Featured View (Simpler version for mobile) */}
+        <div className="lg:hidden w-full overflow-x-auto pb-8 hide-scrollbar snap-x snap-mandatory">
+           <div className="flex gap-4 px-4 w-max">
+              {topProducts.slice(0, 3).map((p, i) => (
+                <div key={p.id} className="w-[280px] snap-center">
+                   <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-xl shadow-blue-50/50">
+                      <div className="relative aspect-square rounded-2xl bg-gray-50 flex items-center justify-center mb-4 p-4">
+                        <Image 
+                          src={p.image_urls?.[0] || '/placeholder.png'} 
+                          alt={p.title} 
+                          width={180} 
+                          height={180} 
+                          className="object-contain" 
+                          priority
+                        />
+                      </div>
+
+                      <h3 className="font-bold text-gray-900 truncate">{p.title}</h3>
+                      <div className="mt-2 flex items-center justify-between">
+                         <span className="text-blue-600 font-bold">${p.preferred_currency === 'usd' ? p.price_usd : p.price_ars}</span>
+                         <a href={`/product/${p.id}`} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><ChevronRight size={16} /></a>
+                      </div>
+                   </div>
+                </div>
+              ))}
+           </div>
         </div>
       </div>
     </section>

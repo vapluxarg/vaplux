@@ -35,11 +35,11 @@ export default function Carousel({ slides = [] }){
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
           {slides.map((s, i) => (
-            <div key={i} className="min-w-full p-6 bg-iceWhite">
+            <div key={i} className="min-w-full p-6 bg-slate-50 border border-slate-100 rounded-xl">
               <div className="flex items-center gap-6">
                 <div className="flex-1">
-                  <h2 className="text-2xl font-semibold text-primary">{s.title}</h2>
-                  <p className="mt-1 text-slateInk/80">{s.subtitle}</p>
+                  <h2 className="text-2xl font-bold text-slate-900">{s.title}</h2>
+                  <p className="mt-1 text-slate-600">{s.subtitle}</p>
                   <div className="mt-4 flex gap-2">
                     {s.cta?.map((c, ci) => (
                       <Link key={ci} href={c.href} className={`btn-cta ${c.variant === 'secondary' ? 'btn-cta-secondary' : 'btn-cta-primary'}`}>{c.label}</Link>
@@ -62,10 +62,10 @@ export default function Carousel({ slides = [] }){
         <div className="flex gap-2" aria-label="Indicadores">
           {slides.map((_, i) => (
             <button
-              key={i}
-              aria-label={`Ir al slide ${i + 1}`}
-              className={`h-2 w-2 rounded-full ${i === index ? 'bg-royal' : 'bg-mistGray'}`}
-              onClick={() => goTo(i)}
+               key={i}
+               aria-label={`Ir al slide ${i + 1}`}
+               className={`h-2.5 w-2.5 rounded-full transition-colors ${i === index ? 'bg-brand shadow-glow' : 'bg-slate-300 hover:bg-slate-400'}`}
+               onClick={() => goTo(i)}
             />
           ))}
         </div>

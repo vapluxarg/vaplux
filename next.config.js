@@ -1,15 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
   trailingSlash: true,
   // TODO: ajuste según el repo de GitHub Pages
   basePath: process.env.NEXT_BASE_PATH || '',
   assetPrefix: process.env.NEXT_BASE_PATH || '',
   images: {
     // Desactiva el Image Optimization API en modo export estático
-    unoptimized: true,
     // Permitimos imágenes remotas desde Pinterest (i.pinimg.com)
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ephaemhbunbeddeiqlsq.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
       {
         protocol: 'https',
         hostname: 'i.pinimg.com',
