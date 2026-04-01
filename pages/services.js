@@ -1,10 +1,17 @@
+import Head from 'next/head'
 import Navbar from '@/components/Navbar'
 import Services from '@/components/Services'
 
 export default function ServicesPage(){
   return (
-    <div className="home-celeste min-h-screen">
-      <Navbar />
+    <>
+      <Head>
+        <title>Servicios · Vaplux</title>
+        <meta name="description" content="Nuestros servicios en Vaplux: Reparación de iPhones y sumate a nuestro equipo de ventas." />
+        <meta property="og:title" content="Servicios · Vaplux" />
+      </Head>
+      <div className="home-celeste min-h-screen">
+        <Navbar />
       <header className="relative overflow-hidden pt-16 pb-12">
         <div className="aurora-layer opacity-40" />
         <div className="relative max-w-[1400px] mx-auto px-6 md:px-12 text-center">
@@ -15,5 +22,6 @@ export default function ServicesPage(){
       </header>
       <Services />
     </div>
+    </>
   )
 }

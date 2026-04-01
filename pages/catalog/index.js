@@ -13,13 +13,15 @@ export async function getServerSideProps() {
     .from('categories')
     .select('*')
     .eq('is_active', true)
+    .eq('store', 'vaplux')
     .order('name');
 
   // Fetch active products with their category
   const { data: products, error: prodError } = await supabase
     .from('products')
     .select('*, categories(name, id)')
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .eq('store', 'vaplux');
 
   if (catError || prodError) {
     console.error('Supabase error:', catError, prodError);
@@ -68,6 +70,8 @@ const getBrand = (name) => {
   if (first.length > 2) return first.charAt(0).toUpperCase() + first.slice(1);
   return 'Otra';
 }
+
+import Head from 'next/head'
 
 export default function Catalog({ dbProducts = [], dbCategories = [] }){
   const [filters, setFilters] = useState({ query: '', priceMin: '', priceMax: '', sort: 'relevance', category: '', brand: '', promoOnly: false })
@@ -140,9 +144,15 @@ export default function Catalog({ dbProducts = [], dbCategories = [] }){
   }, [filters, dbProducts, getProductPrice, currency, dolarBlue])
 
   return (
-    <div className="home-celeste min-h-screen font-sans text-gray-900 selection:bg-blue-200">
-      <a id="top" />
-      <Navbar />
+    <>
+      <Head>
+        <title>Catálogo Completo · Vaplux</title>
+        <meta name="description" content="Explorá todo nuestro catálogo de productos en Vaplux. La mejor tecnología, Apple, accesorios y vapeo." />
+        <meta property="og:title" content="Catálogo Completo · Vaplux" />
+      </Head>
+      <div className="home-celeste min-h-screen font-sans text-gray-900 selection:bg-blue-200">
+        <a id="top" />
+        <Navbar />
       <main className="max-w-[1400px] mx-auto px-4 py-8 flex flex-col md:flex-row gap-6 lg:gap-8 relative items-start">
         
         {/* Toggle Mobile Filters */}
@@ -324,5 +334,6 @@ export default function Catalog({ dbProducts = [], dbCategories = [] }){
         </div>
       </main>
     </div>
+    </>
   )
 }

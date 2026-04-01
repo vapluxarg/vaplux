@@ -6,6 +6,7 @@ import { supabase } from '@/utils/supabase'
 import { getDolarBlue } from '@/utils/dolar'
 import { trackCategoryEvent } from '@/utils/analytics'
 import { useCurrency } from '@/context/CurrencyContext'
+import Head from 'next/head'
 
 export async function getServerSideProps(context) {
   const { categoria } = context.params;
@@ -15,6 +16,7 @@ export async function getServerSideProps(context) {
     .from('categories')
     .select('*')
     .eq('slug', categoria)
+    .eq('store', 'vaplux')
     .single();
 
   if (catError || !categoryData) {
@@ -34,7 +36,8 @@ export async function getServerSideProps(context) {
     .from('products')
     .select('*, categories(name, slug), subcategories(name, slug)')
     .eq('category_id', categoryData.id)
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .eq('store', 'vaplux');
 
   if (prodError) {
     console.error('Supabase error:', prodError);
@@ -159,8 +162,16 @@ export default function CatalogCategory({ category, dbProducts = [], dbSubcatego
   }, [filters, dbProducts, getProductPrice, currency, dolarBlue])
 
   return (
-    <div className="home-celeste min-h-screen font-sans text-gray-900 selection:bg-blue-200">
-      <Navbar />
+    <>
+      <Head>
+        <title>{category?.name ? `${category.name} · Vaplux` : 'Catálogo · Vaplux'}</title>
+        <meta name="description" content={`Explorá nuestra categoría de ${category?.name || 'productos'}. Encontrá la mejor tecnología y vapeo en Vaplux.`} />
+        <meta property="og:title" content={`${category?.name || 'Catálogo'} en Vaplux`} />
+        <meta property="og:description" content={`Explorá la categoría de ${category?.name} al mejor precio.`} />
+        <meta property="og:image" content="/assets/logo.PNG" />
+      </Head>
+      <div className="home-celeste min-h-screen font-sans text-gray-900 selection:bg-blue-200">
+        <Navbar />
       <main className="max-w-[1400px] mx-auto px-4 py-8 flex flex-col md:flex-row gap-6 lg:gap-8 relative items-start">
         
         {/* Toggle Mobile Filters */}
@@ -349,5 +360,6 @@ export default function CatalogCategory({ category, dbProducts = [], dbSubcatego
         </div>
       </main>
     </div>
+    </>
   )
 }

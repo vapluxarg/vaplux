@@ -22,6 +22,7 @@ export async function getServerSideProps({ params }) {
     .from('products')
     .select('*, categories(name, slug)')
     .eq('slug', slug)
+    .eq('store', 'vaplux')
     .single();
 
   if (error || !rawProduct) return { notFound: true }
@@ -30,6 +31,7 @@ export async function getServerSideProps({ params }) {
     .from('products')
     .select('*, categories(name, slug)')
     .eq('category_id', rawProduct.category_id)
+    .eq('store', 'vaplux')
     .neq('id', rawProduct.id)
     .limit(4);
 
@@ -84,6 +86,11 @@ export default function ProductPage({ product, related }) {
     <div className="home-celeste min-h-screen font-sans selection:bg-blue-500/30 overflow-x-hidden">
       <Head>
         <title>{`${product.name} · Vaplux`}</title>
+        <meta name="description" content={product.specs?.join(' - ') || `Comprá ${product.name} al mejor precio en Vaplux.`} />
+        <meta property="og:title" content={`${product.name} en Vaplux`} />
+        <meta property="og:description" content={`Aprovechá a llevarte ${product.name} con envíos a todo el país.`} />
+        <meta property="og:image" content={product.image || '/assets/logo.PNG'} />
+        <meta property="og:type" content="product" />
       </Head>
       <Navbar />
 

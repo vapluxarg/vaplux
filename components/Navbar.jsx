@@ -25,7 +25,7 @@ export default function Navbar() {
 
   useEffect(() => {
     async function fetchCategories() {
-      const { data: cats } = await supabase.from('categories').select('*').eq('is_active', true).order('name')
+      const { data: cats } = await supabase.from('categories').select('*').eq('is_active', true).eq('store', 'vaplux').order('name')
       if (cats) {
         setCategories(cats)
       }

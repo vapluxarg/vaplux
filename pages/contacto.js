@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { useState } from 'react'
+import Head from 'next/head'
 import Navbar from '@/components/Navbar'
 import { Instagram } from 'lucide-react'
 import { getWhatsAppUrl } from '@/utils/whatsapp'
@@ -31,9 +32,15 @@ export default function Contacto(){
   }
 
   return (
-    <div className="home-celeste min-h-screen selection:bg-blue-100">
-      <Navbar />
-      <main className="max-w-[1400px] mx-auto px-6 md:px-12 py-12">
+    <>
+      <Head>
+        <title>Contacto · Vaplux</title>
+        <meta name="description" content="Contactate con nuestro equipo por WhatsApp o en nuestras sucursales y puntos de retiro." />
+        <meta property="og:title" content="Contacto · Vaplux" />
+      </Head>
+      <div className="home-celeste min-h-screen selection:bg-blue-100">
+        <Navbar />
+        <main className="max-w-[1400px] mx-auto px-6 md:px-12 py-12">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-3 text-xs font-black uppercase tracking-widest text-slate-400 mb-12 overflow-x-auto whitespace-nowrap">
           <Link href="/" className="hover:text-blue-600 transition-colors">Inicio</Link>
@@ -139,5 +146,6 @@ export default function Contacto(){
         </div>
       </main>
     </div>
+    </>
   )
 }

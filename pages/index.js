@@ -21,6 +21,7 @@ export async function getServerSideProps() {
     .from('products')
     .select('id, title, price_ars, price_usd, image_urls, preferred_currency, meli_clicks, added_to_cart_count, slug, has_promo, promo_price')
     .eq('is_active', true)
+    .eq('store', 'vaplux')
     .order('added_to_cart_count', { ascending: false })
     .limit(3)
 
@@ -29,6 +30,7 @@ export async function getServerSideProps() {
     .from('categories')
     .select('id, name, slug')
     .eq('is_active', true)
+    .eq('store', 'vaplux')
     .order('name')
 
   // Fetch all active products once to avoid N+1 queries
@@ -36,6 +38,7 @@ export async function getServerSideProps() {
     .from('products')
     .select('id, title, price_ars, price_usd, image_urls, preferred_currency, slug, has_promo, promo_price, category_id')
     .eq('is_active', true)
+    .eq('store', 'vaplux')
 
   // Group products by category in memory (taking top 2 per category)
   const categoryProducts = (categories || []).map((cat) => {
