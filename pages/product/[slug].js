@@ -14,7 +14,14 @@ import { Truck, ShieldCheck, FileText, Package } from 'lucide-react'
 import { trackProductEvent } from '@/utils/analytics'
 import { getWhatsAppUrl } from '@/utils/whatsapp'
 
-export async function getServerSideProps({ params }) {
+export async function getStaticPaths() {
+  return {
+    paths: [],
+    fallback: 'blocking'
+  }
+}
+
+export async function getStaticProps({ params }) {
   const { slug } = params;
 
   // Buscar producto por su slug
@@ -35,8 +42,6 @@ export async function getServerSideProps({ params }) {
     .neq('id', rawProduct.id)
     .limit(4);
 
-  const dolarBlue = await getDolarBlue();
-
   const mapProd = (p) => {
     return {
       ...p,
@@ -53,7 +58,8 @@ export async function getServerSideProps({ params }) {
     props: {
       product: mapProd(rawProduct),
       related: (rawRelated || []).map(mapProd)
-    }
+    },
+    revalidate: 60
   }
 }
 

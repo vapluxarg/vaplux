@@ -45,6 +45,7 @@ export default function ProductGallery({ images = [], alt = 'Producto', compact 
         <img
           src={resolveSrc(safeImages[active])}
           alt={alt}
+          fetchPriority="high"
           className={`product-image transition-all duration-700 ease-out group-hover/main:scale-[1.03] ${compact ? 'max-h-[60vh] md:max-h-[70vh] lg:max-h-[75vh] w-auto max-w-full object-contain mx-auto' : 'max-h-[400px] md:max-h-[500px] w-auto max-w-full object-contain mx-auto'}`}
         />
         {/* Subtle overlay hint */}
