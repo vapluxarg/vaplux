@@ -8,7 +8,7 @@ const CategoryShowcase = dynamic(() => import('@/components/home/CategoryShowcas
 const ServicePrecision = dynamic(() => import('@/components/home/ServicePrecision'))
 const PromotionPopup = dynamic(() => import('@/components/PromotionPopup'), { ssr: false })
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
   const { data: promo } = await supabase
     .from('promotions')
     .select('id, title, short_description, banner_image_url, expires_at')
@@ -53,7 +53,8 @@ export async function getServerSideProps() {
       activePromotion: promo || null,
       topProducts: topProducts || [],
       categoryProducts: categoryProducts || []
-    }
+    },
+    revalidate: 60
   }
 }
 

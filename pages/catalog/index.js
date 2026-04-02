@@ -7,7 +7,7 @@ import { supabase } from '@/utils/supabase'
 import { getDolarBlue } from '@/utils/dolar'
 import { useCurrency } from '@/context/CurrencyContext'
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
   // Fetch active categories
   const { data: categories, error: catError } = await supabase
     .from('categories')
@@ -25,11 +25,8 @@ export async function getServerSideProps() {
 
   if (catError || prodError) {
     console.error('Supabase error:', catError, prodError);
-    return { props: { dbProducts: [], dbCategories: [] } };
+    return { props: { dbProducts: [], dbCategories: [] }, revalidate: 60 };
   }
-
-  // Pre-process products so they match what the Component expects
-  const dolarBlue = await getDolarBlue();
 
   const mappedProducts = products.map(p => {
     return {
@@ -47,7 +44,8 @@ export async function getServerSideProps() {
     props: {
       dbProducts: mappedProducts,
       dbCategories: categories || []
-    }
+    },
+    revalidate: 60
   }
 }
 
@@ -326,8 +324,8 @@ export default function Catalog({ dbProducts = [], dbCategories = [] }){
              </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-              {filtered.map(p => (
-                <ProductCard key={p.id} product={p} showCategory={!filters.category} />
+              {filtered.map((p, i) => (
+                <ProductCard key={p.id} product={p} showCategory={!filters.category} isPriority={i < 4} />
               ))}
             </div>
           )}

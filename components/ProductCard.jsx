@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Flame, Tag, ShoppingCart } from 'lucide-react'
 
-export default function ProductCard({ product, showSpecs = false, showCategory = false, isCompact = false }){
+export default function ProductCard({ product, showSpecs = false, showCategory = false, isCompact = false, isPriority = false }){
   const { add } = useCart()
   const { currency, formatPrice, formatPromoPrice } = useCurrency()
   const [added, setAdded] = useState(false)
@@ -92,7 +92,7 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
             src={resolveSrc(product.image || product.image_urls?.[0])}
             alt={product.name || product.title}
             fill
-            priority={false}
+            priority={isPriority}
             sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
             className="product-image object-contain transition-opacity duration-300 ease-out group-hover:opacity-0"
             unoptimized
@@ -102,7 +102,7 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
             src={resolveSrc(product.secondaryImage || product.image_urls?.[1] || product.image || product.image_urls?.[0])}
             alt={`${product.name || product.title} detalle`}
             fill
-            priority={false}
+            priority={isPriority}
             sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
             className="object-contain opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-hover:scale-[1.03]"
             unoptimized
