@@ -16,29 +16,28 @@ export async function getStaticProps() {
     .eq('store', 'vaplux')
     .order('name');
 
-  // Fetch active products with their category
+  // Fetch active products (exclude imported — they go to /importados)
   const { data: products, error: prodError } = await supabase
     .from('products')
-    .select('*, categories(name, id)')
+    .select('*, categories(name, id), product_variants(price_usd, price_ars, preferred_currency, stock)')
     .eq('is_active', true)
-    .eq('store', 'vaplux');
+    .eq('store', 'vaplux')
+    .eq('is_imported', false);
 
   if (catError || prodError) {
     console.error('Supabase error:', catError, prodError);
     return { props: { dbProducts: [], dbCategories: [] }, revalidate: 60 };
   }
 
-  const mappedProducts = products.map(p => {
-    return {
-      ...p,
-      name: p.title,
-      category: p.categories?.name || 'Uncategorized',
-      specs: p.description ? p.description.split('\n') : [],
-      image: (p.image_urls && p.image_urls.length > 0) ? p.image_urls[0] : null,
-      secondaryImage: (p.image_urls && p.image_urls.length > 1) ? p.image_urls[1] : null,
-      slug: p.slug || p.id
-    };
-  });
+  const mappedProducts = products.map(p => ({
+    ...p,
+    name: p.title,
+    category: p.categories?.name || 'Uncategorized',
+    specs: p.description ? p.description.split('\n') : [],
+    image: (p.image_urls && p.image_urls.length > 0) ? p.image_urls[0] : null,
+    secondaryImage: (p.image_urls && p.image_urls.length > 1) ? p.image_urls[1] : null,
+    slug: p.slug || p.id,
+  }));
 
   return {
     props: {
@@ -186,7 +185,8 @@ export default function Catalog({ dbProducts = [], dbCategories = [] }){
           </div>
 
           <div className={`p-6 md:p-0 md:pr-4 flex-1 overflow-y-auto ${showFilters ? 'bg-white' : ''}`}>
-            <h1 className="text-2xl font-semibold mb-6 text-gray-900 hidden md:block">Catálogo</h1>
+            <h1 className="text-2xl font-semibold mb-1 text-gray-900 hidden md:block">Catálogo</h1>
+            <p className="text-xs text-green-600 font-semibold mb-5 hidden md:block">Con stock para entrega inmediata</p>
             
             <div className="mb-4">
                <input

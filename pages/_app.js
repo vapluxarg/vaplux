@@ -1,6 +1,7 @@
 import '@/styles/globals.css'
 import { CartProvider } from '@/context/CartContext'
 import { CurrencyProvider } from '@/context/CurrencyContext'
+import { CategoriesProvider } from '@/context/CategoriesContext'
 import FloatingActions from '@/components/FloatingActions'
 import Footer from '@/components/Footer'
 import CartSidebar from '@/components/CartSidebar'
@@ -36,11 +37,13 @@ export default function App({ Component, pageProps }) {
         <meta name="theme-color" content="#0066ff" />
       </Head>
       <CurrencyProvider>
-        <CartProvider>
-          {getLayout(<Component {...pageProps} />)}
-          <Analytics />
-          <SpeedInsights />
-        </CartProvider>
+        <CategoriesProvider>
+          <CartProvider>
+            {getLayout(<Component {...pageProps} />)}
+            <Analytics />
+            <SpeedInsights />
+          </CartProvider>
+        </CategoriesProvider>
       </CurrencyProvider>
     </>
   )

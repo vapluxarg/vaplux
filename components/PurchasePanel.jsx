@@ -1,33 +1,102 @@
 /**
  * PurchasePanel — individual product purchase section
- * Accepts:
- *   onAdd(product, qty)       → add to cart (analytics: cart_add via CartContext)
- *   onWhatsApp(product, qty)  → direct WA checkout (analytics: whatsapp_checkout)
- *   onMeli(product)           → ML link click  (analytics: meli_click)
+ * Supports:
+ *   - Simple products (stock + price at product level)
+ *   - Variant products (selectors per attribute, price from selected variant)
+ *   - Imported products (a pedido, no stock display)
  */
-import { useState } from 'react'
-import { MessageCircle, ShoppingCart, ExternalLink, Handshake } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { MessageCircle, ShoppingCart, ExternalLink, Clock, PackageCheck } from 'lucide-react'
 import { useCurrency } from '@/context/CurrencyContext'
 
-export default function PurchasePanel({ product, onAdd, onWhatsApp, onMeli }) {
-  const { formatPrice, formatPromoPrice, getProductPrice } = useCurrency()
+export default function PurchasePanel({ product, variants = [], onAdd, onWhatsApp, onMeli }) {
+  const { formatPrice, formatPromoPrice, getProductPrice, dolarBlue, currency } = useCurrency()
   const [added, setAdded] = useState(false)
   const [qty, setQty] = useState(1)
+  const [selectedAttrs, setSelectedAttrs] = useState({})
 
-  const maxStock = product?.stock || 0
-  const inc = () => setQty(q => Math.min(q + 1, maxStock))
-  const dec = () => setQty(q => Math.max(q - 1, 1))
-
+  const isImported = !!product?.is_imported
+  const hasVariants = !!product?.has_variants && variants.length > 0
   const hasWA = !!onWhatsApp
   const hasMeli = !!onMeli && !!product?.ml_link
+
+  // Build attribute domains from variants
+  const attributeKeys = useMemo(() => {
+    if (!hasVariants) return []
+    const allKeys = variants.flatMap(v => Object.keys(v.attributes || {}))
+    return [...new Set(allKeys)]
+  }, [variants, hasVariants])
+
+  const getOptionsForDomain = (domain) => {
+    return [...new Set(variants.map(v => v.attributes?.[domain]).filter(Boolean))]
+  }
+
+  // Find the matched variant given current selection
+  const selectedVariant = useMemo(() => {
+    if (!hasVariants || attributeKeys.length === 0) return null
+    return variants.find(v =>
+      attributeKeys.every(key => v.attributes?.[key] === selectedAttrs[key])
+    ) || null
+  }, [variants, selectedAttrs, attributeKeys, hasVariants])
+
+  const allAttrsSelected = attributeKeys.length > 0 && attributeKeys.every(k => selectedAttrs[k])
+
+  // Price resolution
+  const resolvedPrice = useMemo(() => {
+    if (hasVariants && selectedVariant) {
+      if (currency === 'USD') {
+        return selectedVariant.preferred_currency === 'usd'
+          ? selectedVariant.price_usd
+          : (selectedVariant.price_ars || 0) / dolarBlue
+      } else {
+        return selectedVariant.preferred_currency === 'ars'
+          ? selectedVariant.price_ars
+          : (selectedVariant.price_usd || 0) * dolarBlue
+      }
+    }
+    return product ? getProductPrice(product) : 0
+  }, [selectedVariant, hasVariants, product, currency, dolarBlue, getProductPrice])
+
+  const formattedPrice = useMemo(() => {
+    if (!resolvedPrice) return null
+    return currency === 'USD'
+      ? `U$D ${Number(resolvedPrice).toLocaleString('es-AR', { minimumFractionDigits: 0 })}`
+      : `$ ${Number(resolvedPrice).toLocaleString('es-AR', { minimumFractionDigits: 0 })}`
+  }, [resolvedPrice, currency])
+
+  // Stock
+  const variantStock = selectedVariant?.stock ?? null
+  const baseStock = isImported ? null : (product?.stock ?? 0)
+  const effectiveStock = hasVariants ? (allAttrsSelected ? variantStock : null) : baseStock
+
+  const maxStock = isImported ? 99999 : (effectiveStock ?? 0)
+  const inc = () => setQty(q => isImported ? q + 1 : Math.min(q + 1, maxStock))
+  const dec = () => setQty(q => Math.max(q - 1, 1))
+
+  const canBuy = isImported
+    ? (hasVariants ? allAttrsSelected : true)
+    : (hasVariants ? (allAttrsSelected && (variantStock === null || variantStock > 0)) : maxStock > 0)
 
   return (
     <aside className="p-5 rounded-[2rem] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-slate-100 flex flex-col gap-4 relative overflow-hidden">
       {/* Decorative accent */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+
+      {/* Imported notice */}
+      {isImported && (
+        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+          <Clock size={18} className="text-amber-600 shrink-0" />
+          <div>
+            <p className="text-xs font-black text-amber-800 uppercase tracking-tight">Producto Importado · A Pedido</p>
+            <p className="text-[11px] text-amber-700">Tiempo estimado de entrega: <strong>7 días hábiles</strong> desde la consulta.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Price */}
       <div className="flex flex-col gap-2 relative z-10">
         <div className="flex flex-col">
-          {product?.has_promo && product?.promo_price ? (
+          {!hasVariants && product?.has_promo && product?.promo_price ? (
             <div className="flex flex-col">
               <span className="text-sm md:text-base text-slate-400 line-through font-medium">
                 {formatPrice(product)}
@@ -39,53 +108,88 @@ export default function PurchasePanel({ product, onAdd, onWhatsApp, onMeli }) {
                 <span className="bg-green-100 text-green-700 text-xs font-black px-2 py-0.5 rounded-full uppercase tracking-wider">OFERTA</span>
               </div>
             </div>
+          ) : hasVariants && !allAttrsSelected ? (
+            <div className="flex flex-col gap-1">
+              <span className="text-sm text-slate-500 font-medium">Seleccioná una variante para ver el precio</span>
+              <span className="text-2xl font-black text-slate-300 tracking-tighter">—</span>
+            </div>
           ) : (
             <span className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">
-              {product ? formatPrice(product) : '—'}
+              {formattedPrice || (product ? formatPrice(product) : '—')}
             </span>
           )}
         </div>
       </div>
 
-      {/* Qty and Stock selector side-by-side */}
+      {/* Variant selectors */}
+      {hasVariants && (
+        <div className="flex flex-col gap-3">
+          {attributeKeys.map(domain => {
+            const options = getOptionsForDomain(domain)
+            return (
+              <div key={domain}>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{domain}</span>
+                <div className="flex flex-wrap gap-2">
+                  {options.map(opt => {
+                    const isSelected = selectedAttrs[domain] === opt
+                    // Check if this option leads to a valid variant
+                    const isAvailable = variants.some(v =>
+                      v.attributes?.[domain] === opt &&
+                      attributeKeys.filter(k => k !== domain).every(k => !selectedAttrs[k] || v.attributes?.[k] === selectedAttrs[k])
+                    )
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setSelectedAttrs(prev => ({ ...prev, [domain]: opt }))}
+                        className={`px-3 py-1.5 rounded-xl text-sm font-semibold border transition-all ${
+                          isSelected
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-200'
+                            : isAvailable
+                              ? 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600'
+                              : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                        }`}
+                        disabled={!isAvailable}
+                      >
+                        {opt}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Qty and Stock */}
       <div className="flex items-center justify-between gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Cantidad</span>
           <div className="flex items-center bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-            <button
-              onClick={dec}
-              disabled={qty <= 1}
-              className="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-blue-600 transition-all font-black text-lg disabled:opacity-30 disabled:hover:bg-transparent"
-            >−</button>
-            <input
-              aria-label="Cantidad"
-              value={qty}
-              readOnly
-              className="w-8 text-center text-sm font-black text-slate-900 bg-transparent border-none outline-none select-none"
-            />
-            <button
-              onClick={inc}
-              disabled={qty >= maxStock}
-              className="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-blue-600 transition-all font-black text-lg disabled:opacity-30 disabled:hover:bg-transparent"
-            >+</button>
+            <button onClick={dec} disabled={qty <= 1} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-blue-600 transition-all font-black text-lg disabled:opacity-30">−</button>
+            <input aria-label="Cantidad" value={qty} readOnly className="w-8 text-center text-sm font-black text-slate-900 bg-transparent border-none outline-none select-none" />
+            <button onClick={inc} disabled={!isImported && qty >= maxStock} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-blue-600 transition-all font-black text-lg disabled:opacity-30">+</button>
           </div>
         </div>
 
         <div className="flex flex-col items-end gap-1.5">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Disponibilidad</span>
-          {product?.stock !== undefined && (
-            <div className="h-10 flex items-center">
-              {product.stock > 0 ? (
-                product.stock < 5 ? (
-                  <div className="flex items-center gap-1.5 text-[11px] font-black text-orange-600 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 uppercase tracking-tight">Últimas unidades ✓</div>
-                ) : (
-                  <div className="flex items-center gap-1.5 text-[11px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 uppercase tracking-tight">Stock disponible ✓</div>
-                )
+          <div className="h-10 flex items-center">
+            {isImported ? (
+              <div className="flex items-center gap-1.5 text-[11px] font-black text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100 uppercase tracking-tight">A pedido · 7 días</div>
+            ) : hasVariants && !allAttrsSelected ? (
+              <div className="flex items-center gap-1.5 text-[11px] font-black text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100 uppercase tracking-tight">Elegí variante</div>
+            ) : effectiveStock !== null && effectiveStock > 0 ? (
+              effectiveStock < 5 ? (
+                <div className="flex items-center gap-1.5 text-[11px] font-black text-orange-600 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 uppercase tracking-tight">Últimas unidades ✓</div>
               ) : (
-                <div className="flex items-center gap-1.5 text-[11px] font-black text-red-600 bg-red-50 px-3 py-1.5 rounded-full border border-red-100 uppercase tracking-tight">Sin Stock ✕</div>
-              )}
-            </div>
-          )}
+                <div className="flex items-center gap-1.5 text-[11px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 uppercase tracking-tight">Stock disponible ✓</div>
+              )
+            ) : (
+              <div className="flex items-center gap-1.5 text-[11px] font-black text-red-600 bg-red-50 px-3 py-1.5 rounded-full border border-red-100 uppercase tracking-tight">Sin Stock ✕</div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -94,11 +198,11 @@ export default function PurchasePanel({ product, onAdd, onWhatsApp, onMeli }) {
         <div className="flex gap-3 h-14">
           <button
             onClick={() => {
-              onAdd?.(product, qty)
+              onAdd?.(product, qty, selectedVariant || null)
               setAdded(true)
               setTimeout(() => setAdded(false), 2000)
             }}
-            disabled={maxStock <= 0}
+            disabled={!canBuy}
             className={`flex-1 flex items-center justify-center gap-2 font-black rounded-2xl transition-all duration-300 shadow-lg disabled:opacity-50 disabled:grayscale disabled:pointer-events-none ${added ? 'bg-green-600 text-white shadow-green-200' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-900/10 hover:shadow-blue-600/30'}`}
           >
             {added ? (
@@ -110,7 +214,7 @@ export default function PurchasePanel({ product, onAdd, onWhatsApp, onMeli }) {
 
           {hasWA && (
             <button
-              onClick={() => onWhatsApp?.(product, qty)}
+              onClick={() => onWhatsApp?.(product, qty, selectedVariant)}
               className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl transition-all shadow-lg shadow-emerald-900/10 hover:shadow-emerald-600/30 group/wa"
             >
               <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current" xmlns="http://www.w3.org/2000/svg">
@@ -144,18 +248,6 @@ export default function PurchasePanel({ product, onAdd, onWhatsApp, onMeli }) {
           </a>
         )}
       </div>
-
-      {/* Variants placeholder */}
-      {Array.isArray(product?.variants) && product.variants.length > 0 && (
-        <div>
-          <p className="text-sm font-medium mb-2">Variantes</p>
-          <div className="flex flex-wrap gap-2">
-            {product.variants.map((v, i) => (
-              <button key={i} className={`px-3 py-1 rounded-md border text-sm ${v.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`} disabled={v.disabled}>{v.label}</button>
-            ))}
-          </div>
-        </div>
-      )}
     </aside>
   )
 }

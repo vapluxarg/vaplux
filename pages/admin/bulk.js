@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import AdminLayout, { useAdmin } from '@/components/admin/AdminLayout'
 import { supabase } from '@/utils/supabase'
-import { DollarSign, MapPin, Package, Flame } from 'lucide-react'
+import { DollarSign, MapPin, Package, Flame, Shuffle } from 'lucide-react'
 
 export default function AdminBulk() {
   const { globalStore } = useAdmin()
-  const [mode, setMode] = useState('price_usd') // price_usd, price_ars, stock
+  const [mode, setMode] = useState('price_original') // price_original, price_usd, price_ars, promo_price, stock
   const [inputText, setInputText] = useState('')
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -65,11 +65,21 @@ export default function AdminBulk() {
 
       const product = products[0]
       const updateData = {}
-      if (mode === 'promo_price') {
-         updateData.promo_price = value
-         updateData.has_promo = true
+
+      if (mode === 'price_original') {
+        // Write to the field that matches the product's preferred_currency
+        const { data: fullProduct } = await supabase
+          .from('products')
+          .select('preferred_currency')
+          .eq('id', product.id)
+          .single()
+        const field = fullProduct?.preferred_currency === 'ars' ? 'price_ars' : 'price_usd'
+        updateData[field] = value
+      } else if (mode === 'promo_price') {
+        updateData.promo_price = value
+        updateData.has_promo = true
       } else {
-         updateData[mode] = value
+        updateData[mode] = value
       }
 
       const { error: updateError } = await supabase
@@ -105,24 +115,39 @@ export default function AdminBulk() {
 
         <div className="mb-6">
           <label className="text-xs font-bold text-slate-700 block mb-2">¿Qué variable de la base querés sobreescribir?</label>
-          <div className="flex gap-2">
-            <label className={`flex-1 flex items-center justify-center gap-2 border rounded-sm py-2 px-3 cursor-pointer transition-colors ${mode === 'price_usd' ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+
+            <label className={`flex items-center justify-center gap-2 border rounded-sm py-2 px-3 cursor-pointer transition-colors col-span-2 md:col-span-3 ${mode === 'price_original' ? 'border-violet-500 bg-violet-50 text-violet-800 font-bold shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+              <input type="radio" checked={mode === 'price_original'} onChange={() => setMode('price_original')} className="hidden" />
+              <Shuffle size={16} /> <span className="text-xs">Moneda Original <span className="font-normal opacity-70">(escribe en el campo de la moneda base de cada producto)</span></span>
+            </label>
+
+            <label className={`flex items-center justify-center gap-2 border rounded-sm py-2 px-3 cursor-pointer transition-colors ${mode === 'price_usd' ? 'border-emerald-500 bg-emerald-50 text-emerald-800 font-bold shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
               <input type="radio" checked={mode === 'price_usd'} onChange={() => setMode('price_usd')} className="hidden" />
               <DollarSign size={16} /> <span className="text-xs">Precio Fijo USD</span>
             </label>
-            <label className={`flex-1 flex items-center justify-center gap-2 border rounded-sm py-2 px-3 cursor-pointer transition-colors ${mode === 'price_ars' ? 'border-blue-500 bg-blue-50 text-blue-800 font-bold shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+
+            <label className={`flex items-center justify-center gap-2 border rounded-sm py-2 px-3 cursor-pointer transition-colors ${mode === 'price_ars' ? 'border-blue-500 bg-blue-50 text-blue-800 font-bold shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
               <input type="radio" checked={mode === 'price_ars'} onChange={() => setMode('price_ars')} className="hidden" />
               <MapPin size={16} /> <span className="text-xs">Precio Fijo ARS</span>
             </label>
-            <label className={`flex-1 flex items-center justify-center gap-2 border rounded-sm py-2 px-3 cursor-pointer transition-colors ${mode === 'promo_price' ? 'border-orange-500 bg-orange-50 text-orange-800 font-bold shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+
+            <label className={`flex items-center justify-center gap-2 border rounded-sm py-2 px-3 cursor-pointer transition-colors ${mode === 'promo_price' ? 'border-orange-500 bg-orange-50 text-orange-800 font-bold shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
               <input type="radio" checked={mode === 'promo_price'} onChange={() => setMode('promo_price')} className="hidden" />
               <Flame size={16} /> <span className="text-xs">Precio Promo</span>
             </label>
-            <label className={`flex-1 flex items-center justify-center gap-2 border rounded-sm py-2 px-3 cursor-pointer transition-colors ${mode === 'stock' ? 'border-amber-500 bg-amber-50 text-amber-800 font-bold shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+
+            <label className={`flex items-center justify-center gap-2 border rounded-sm py-2 px-3 cursor-pointer transition-colors ${mode === 'stock' ? 'border-amber-500 bg-amber-50 text-amber-800 font-bold shadow-sm' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
               <input type="radio" checked={mode === 'stock'} onChange={() => setMode('stock')} className="hidden" />
               <Package size={16} /> <span className="text-xs">Stock Físico</span>
             </label>
           </div>
+
+          {mode === 'price_original' && (
+            <p className="mt-2 text-[10px] bg-violet-50 border border-violet-200 text-violet-700 px-3 py-2 rounded-sm">
+              El sistema detecta la <strong>moneda base</strong> de cada producto y escribe el valor en ese campo. Ideal para actualizar precios de una lista mixta sin tener que separar USD y ARS.
+            </p>
+          )}
         </div>
 
         <div className="mb-4">

@@ -9,7 +9,7 @@ import { Download, Package, Edit, Trash2, FileText, Camera } from 'lucide-react'
 export async function getServerSideProps() {
   const { data: products } = await supabase
     .from('products')
-    .select('*, categories(name)')
+    .select('*, categories(name), product_variants(id, label, price_usd, price_ars, preferred_currency, stock)')
     .order('created_at', { ascending: false })
     
   const { data: categories } = await supabase.from('categories').select('*')
@@ -52,33 +52,71 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
   })
 
   const handleExport = async (format) => {
-    // 1. Filter only in-stock products
-    let toExport = filtered.filter(p => p.stock > 0)
-    
-    // 2. Map fields and calculate prices
-    const rows = toExport.map(p => {
-      let finalPrice = ''
-      
+    // Helper: resolve price string for a simple product or variant
+    const resolvePrice = (priceUsd, priceArs, preferredCurrency) => {
       if (exportCurrency === 'original') {
-        finalPrice = p.preferred_currency === 'usd' ? `U$D ${p.price_usd}` : `$ ${p.price_ars}`
+        return preferredCurrency === 'usd' ? `U$D ${priceUsd}` : `$ ${priceArs}`
       } else if (exportCurrency === 'usd') {
-        const val = p.preferred_currency === 'usd' ? p.price_usd : (p.price_ars / dolarRate)
-        finalPrice = `U$D ${Math.round(val)}`
-      } else if (exportCurrency === 'ars') {
-        const val = p.preferred_currency === 'ars' ? p.price_ars : (p.price_usd * dolarRate)
-        finalPrice = `$ ${Math.round(val)}`
+        const val = preferredCurrency === 'usd' ? priceUsd : (priceArs / dolarRate)
+        return `U$D ${Math.round(val)}`
+      } else {
+        const val = preferredCurrency === 'ars' ? priceArs : (priceUsd * dolarRate)
+        return `$ ${Math.round(val)}`
       }
+    }
 
-      return {
-        category: p.categories?.name || '-',
-        name: p.title,
-        price: finalPrice
+    // Build export rows — three product types handled
+    const rows = []
+
+    filtered.forEach(p => {
+      const cat = p.categories?.name || '-'
+
+      if (p.is_imported) {
+        // Imported: always included, real price, no stock
+        rows.push({ category: cat, name: p.title, price: resolvePrice(p.price_usd, p.price_ars, p.preferred_currency), stock: null, isImported: true, isVariant: false, parentName: null })
+
+      } else if (p.has_variants && p.product_variants?.length > 0) {
+        // Variants: include product if at least one variant has stock
+        const activeVariants = p.product_variants.filter(v => p.is_imported || v.stock > 0)
+        if (activeVariants.length === 0) return
+
+        activeVariants.forEach((v, i) => {
+          rows.push({
+            category: i === 0 ? cat : '',       // only show category on first row
+            name: i === 0 ? p.title : '',        // only show name on first row
+            variantLabel: v.label,
+            price: resolvePrice(v.price_usd, v.price_ars, v.preferred_currency),
+            stock: v.stock ?? null,
+            isImported: false,
+            isVariant: true,
+            isFirstVariant: i === 0,
+            parentName: p.title,
+          })
+        })
+
+      } else {
+        // Simple product: only if stock > 0
+        if (!(p.stock > 0)) return
+        rows.push({
+          category: cat,
+          name: p.title,
+          price: resolvePrice(p.price_usd, p.price_ars, p.preferred_currency),
+          stock: p.stock,
+          isImported: false,
+          isVariant: false,
+          parentName: null,
+        })
       }
     })
 
     if (format === 'csv') {
-      const headers = ['Categoría', 'Producto', 'Precio']
-      const csvRows = rows.map(r => `"${r.category}","${r.name.replace(/"/g, '""')}","${r.price}"`)
+      const headers = ['Categoría', 'Producto', 'Variante', 'Precio']
+      const csvRows = rows.map(r => [
+        `"${r.category || ''}"`,
+        `"${(r.name || r.parentName || '').replace(/"/g, '""')}"`,
+        `"${(r.variantLabel || '').replace(/"/g, '""')}"`,
+        `"${r.price}"`
+      ].join(','))
       const csvContent = [headers.join(','), ...csvRows].join('\n')
       
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -90,46 +128,69 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
       link.click()
       document.body.removeChild(link)
       setShowExportModal(false)
+
     } else if (format === 'png') {
       const container = document.createElement('div')
-      // Make sure the browser renders it fully by putting it behind the current view
       container.style.position = 'fixed'
       container.style.left = '0'
       container.style.top = '0'
       container.style.zIndex = '-9999'
-      container.style.width = '800px'
-      
+      container.style.width = '860px'
+
+      const tableRows = rows.map(r => {
+        const isImportedRow  = r.isImported
+        const isVariantSub   = r.isVariant && !r.isFirstVariant
+        const isVariantFirst = r.isVariant && r.isFirstVariant
+        const bgColor        = isImportedRow ? '#fffbeb' : isVariantSub ? '#fafafa' : 'white'
+        const priceColor     = isImportedRow ? '#b45309' : r.price.includes('U$D') ? '#047857' : '#1d4ed8'
+        const stockBg    = r.stock > 4 ? '#dcfce7' : r.stock > 0 ? '#fef9c3' : r.stock === 0 ? '#fee2e2' : 'transparent'
+        const stockColor = r.stock > 4 ? '#166534' : r.stock > 0 ? '#854d0e' : r.stock === 0 ? '#991b1b' : '#94a3b8'
+        const stockCell  = isImportedRow
+          ? ''  // no stock for imported
+          : `<span style="background: ${stockBg}; color: ${stockColor}; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 3px; display: inline-block; min-width: 28px;">${r.stock ?? '-'}</span>`
+
+        return `
+          <tr style="border-bottom: 1px solid #f1f5f9; background: ${bgColor};">
+            <td style="padding: 8px 10px; color: #64748b; font-size: 11px; vertical-align: top;">${r.category || ''}</td>
+            <td style="padding: 8px 10px; font-weight: ${isVariantSub ? '400' : '600'}; font-size: ${isVariantSub ? '12px' : '13px'}; color: #1e293b; vertical-align: top;">
+              ${isVariantSub ? '' : (r.name || r.parentName || '')}
+              ${isImportedRow ? '<span style="margin-left:6px;background:#f59e0b;color:white;font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;vertical-align:middle;">PEDIDO</span>' : ''}
+            </td>
+            <td style="padding: 8px 10px; color: #64748b; font-size: 12px; vertical-align: top; padding-left: ${isVariantSub ? '20px' : '10px'};">${
+              r.variantLabel ? `<span style="background:#ede9fe;color:#6d28d9;padding:1px 6px;border-radius:3px;font-size:11px;font-weight:600;">${r.variantLabel}</span>` : ''
+            }</td>
+            <td style="padding: 8px 10px; text-align: right; font-family: monospace; font-size: 14px; font-weight: bold; color: ${priceColor}; white-space: nowrap; vertical-align: top;">${r.price}</td>
+            <td style="padding: 8px 10px; text-align: center; vertical-align: top;">
+              ${stockCell}
+            </td>
+          </tr>`
+      }).join('')
+
       container.innerHTML = `
-        <div style="padding: 24px; background: white; font-family: sans-serif; width: 100%; color: #1e293b; box-sizing: border-box;">
-          <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; text-transform: uppercase;">Lista de Precios ${globalStore}</h2>
-          <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: left;">
+        <div style="padding: 28px; background: white; font-family: sans-serif; width: 100%; color: #1e293b; box-sizing: border-box;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+            <h2 style="font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Lista de Precios · ${globalStore.toUpperCase()}</h2>
+            <span style="font-size: 11px; color: #94a3b8;">Dólar: $${dolarRate}</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
             <thead>
-              <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; text-transform: uppercase; font-size: 11px;">
-                <th style="padding: 10px;">Categoría</th>
-                <th style="padding: 10px;">Producto</th>
-                <th style="padding: 10px; text-align: right;">Precio</th>
+              <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em;">
+                <th style="padding: 9px 10px; color: #475569;">Categoría</th>
+                <th style="padding: 9px 10px; color: #475569;">Producto</th>
+                <th style="padding: 9px 10px; color: #475569;">Variante</th>
+                <th style="padding: 9px 10px; color: #475569; text-align: right;">Precio</th>
+                <th style="padding: 9px 10px; color: #475569; text-align: center;">Stock</th>
               </tr>
             </thead>
-            <tbody>
-              ${rows.map(r => `
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                  <td style="padding: 10px; color: #64748b; font-size: 12px;">${r.category}</td>
-                  <td style="padding: 10px; font-weight: 600;">${r.name}</td>
-                  <td style="padding: 10px; text-align: right; font-family: monospace; font-size: 15px; font-weight: bold; color: ${r.price.includes('U$D') ? '#047857' : '#1d4ed8'}">${r.price}</td>
-                </tr>
-              `).join('')}
-            </tbody>
+            <tbody>${tableRows}</tbody>
           </table>
-          <div style="margin-top: 24px; font-size: 10px; color: #94a3b8; text-align: right;">Generado automáticamente por Vaplux ERP</div>
-        </div>
-      `
+          <div style="margin-top: 20px; font-size: 10px; color: #94a3b8; text-align: right;">Generado automáticamente por Vaplux ERP</div>
+        </div>`
       
       document.body.appendChild(container)
       
       try {
-        // Wait a frame for browser to calculate layout and paint the DOM element
         await new Promise(resolve => setTimeout(resolve, 150))
-        
         const dataUrl = await toPng(container, { backgroundColor: '#ffffff', pixelRatio: 2 })
         const link = document.createElement('a')
         link.download = `lista_precios_${globalStore}.png`
@@ -180,6 +241,7 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
                 <th className="px-3 py-2 text-right">Precio USD</th>
                 <th className="px-3 py-2 text-right">Precio ARS</th>
                 <th className="px-3 py-2 text-center">Stock</th>
+                <th className="px-3 py-2 text-center">Tipo</th>
                 <th className="px-3 py-2 text-center">Tienda</th>
                 <th className="px-3 py-2 text-center">Estado</th>
                 <th className="px-3 py-2 text-right w-20"></th>
@@ -202,15 +264,28 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
                   </td>
                   <td className="px-3 py-1.5 text-slate-600 truncate max-w-[120px]" title={p.categories?.name}>{p.categories?.name || '-'}</td>
                   <td className="px-3 py-1.5 text-right font-mono font-medium text-emerald-700">
-                    <span className={p.preferred_currency === 'usd' ? 'font-bold' : 'opacity-70'}>{p.price_usd || 0}</span>
+                    {p.has_variants ? <span className="text-slate-400 text-[10px] italic">ver variantes</span> : <span className={p.preferred_currency === 'usd' ? 'font-bold' : 'opacity-70'}>{p.price_usd || 0}</span>}
                   </td>
                   <td className="px-3 py-1.5 text-right font-mono font-medium text-blue-700">
-                    <span className={p.preferred_currency === 'ars' ? 'font-bold' : 'opacity-70'}>{p.price_ars || 0}</span>
+                    {p.has_variants ? <span className="text-slate-400 text-[10px] italic">ver variantes</span> : <span className={p.preferred_currency === 'ars' ? 'font-bold' : 'opacity-70'}>{p.price_ars || 0}</span>}
                   </td>
                   <td className="px-3 py-1.5 text-center">
-                    <span className={`inline-block min-w-[30px] font-mono text-center rounded-sm ${p.stock > 0 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700 font-bold'}`}>
-                      {p.stock || 0}
-                    </span>
+                    {p.is_imported ? (
+                      <span className="inline-block text-[10px] font-bold bg-orange-100 text-orange-700 px-2 rounded-sm">A pedido</span>
+                    ) : p.has_variants ? (
+                      <span className="inline-block text-[10px] font-bold bg-purple-100 text-purple-700 px-2 rounded-sm">por var.</span>
+                    ) : (
+                      <span className={`inline-block min-w-[30px] font-mono text-center rounded-sm ${p.stock > 0 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-700 font-bold'}`}>
+                        {p.stock ?? 0}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-1.5 text-center">
+                    <div className="flex flex-col items-center gap-0.5">
+                      {p.is_imported && <span className="inline-block text-[9px] font-black bg-orange-500 text-white px-1.5 rounded-sm uppercase">Import.</span>}
+                      {p.has_variants && <span className="inline-block text-[9px] font-black bg-purple-500 text-white px-1.5 rounded-sm uppercase">Var.</span>}
+                      {!p.is_imported && !p.has_variants && <span className="text-[10px] font-bold uppercase text-slate-400">{p.store.substring(0, 3)}</span>}
+                    </div>
                   </td>
                   <td className="px-3 py-1.5 text-center">
                     <span className="text-[10px] font-bold uppercase text-slate-400">{p.store.substring(0, 3)}</span>
@@ -247,7 +322,8 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
             </div>
             
             <p className="text-xs text-slate-500 mb-6 bg-amber-50 text-amber-800 p-2 rounded-sm border border-amber-200">
-              La exportación incluirá <strong>solamente</strong> los productos de la tienda y categoría seleccionadas que tengan <strong>stock {'>'} 0</strong>.
+              Incluye productos con <strong>stock &gt; 0</strong>, todos los <strong>importados</strong> (a pedido) y variantes disponibles.
+              Los productos con variantes generan una fila por cada variante con stock.
             </p>
 
             <div className="mb-6 space-y-2">

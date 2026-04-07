@@ -2,14 +2,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Flame, Tag, ShoppingCart } from 'lucide-react'
+import { Flame, Tag, ShoppingCart, PackageX, Clock } from 'lucide-react'
 
 export default function ProductCard({ product, showSpecs = false, showCategory = false, isCompact = false, isPriority = false }){
   const { add } = useCart()
-  const { currency, formatPrice, formatPromoPrice } = useCurrency()
+  const { currency, dolarBlue, formatPrice, formatPromoPrice, getProductPrice } = useCurrency()
   const [added, setAdded] = useState(false)
   const router = useRouter()
 
@@ -23,6 +23,22 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
 
   // Resolve promo pricing
   const hasPromo = product.has_promo && product.promo_price
+  const isImported = !!product.is_imported
+  const hasVariants = !!product.has_variants
+
+  // For out-of-stock detection (only for non-imported, non-variant products)
+  const isOutOfStock = !isImported && !hasVariants && (product.stock === 0 || product.stock === null || product.stock === undefined)
+
+  // Compute variant min price dynamically — reacts to currency and dolarBlue changes
+  const variantMinPrice = useMemo(() => {
+    if (!hasVariants) return null
+    const variants = product.product_variants || []
+    if (variants.length === 0) return null
+    const prices = variants
+      .map(v => getProductPrice({ price_usd: v.price_usd, price_ars: v.price_ars, preferred_currency: v.preferred_currency }))
+      .filter(x => x > 0)
+    return prices.length > 0 ? Math.min(...prices) : null
+  }, [hasVariants, product.product_variants, currency, dolarBlue, getProductPrice])
   
   // Compute discount %
   const basePrice = (product.price_usd && Number(product.price_usd) > 0) ? Number(product.price_usd) : Number(product.price_ars)
@@ -71,6 +87,20 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       <div className="relative image-safe-zone !bg-white !border-gray-50 rounded-md overflow-hidden mix-blend-multiply">
+        {/* Out of stock overlay */}
+      {isOutOfStock && (
+        <div className="absolute inset-0 z-20 bg-white/70 backdrop-blur-[1px] rounded-lg flex flex-col items-center justify-center gap-1 pointer-events-none">
+          <PackageX size={22} className="text-slate-400" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Sin Stock</span>
+        </div>
+      )}
+      {/* Imported / A pedido overlay */}
+      {isImported && (
+        <div className="absolute inset-0 z-20 bg-amber-900/10 backdrop-blur-[0.5px] rounded-lg flex flex-col items-center justify-center gap-1 pointer-events-none">
+          <Clock size={20} className="text-amber-600" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-amber-700">A pedido</span>
+        </div>
+      )}
         {/* Promo badge */}
         {hasPromo && (
           <span className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 bg-blue-600 text-white text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded shadow-sm">
@@ -111,7 +141,12 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
       </div>
       <div className={`${isCompact ? 'flex-1 min-w-0 pr-2' : 'mt-3 flex flex-col flex-1'}`}>
         <h3 className={`${isCompact ? 'text-[11px] font-bold truncate' : 'text-sm font-normal'} text-gray-700 leading-tight mb-0.5 uppercase tracking-tight`}>{product.name || product.title}</h3>
-        {hasPromo ? (
+        {hasVariants && variantMinPrice ? (
+          <p className={`${isCompact ? 'text-sm' : 'text-xl'} font-black text-gray-900 tracking-tighter`}>
+            <span className="text-xs font-semibold text-gray-500 mr-0.5">Desde</span>
+            {formatPrice(variantMinPrice)}
+          </p>
+        ) : hasPromo ? (
           <div className="flex items-center gap-2">
             <span className={`${isCompact ? 'text-sm' : 'text-xl'} font-black text-green-600 tracking-tighter`}>
               {formatPromoPrice(product)}

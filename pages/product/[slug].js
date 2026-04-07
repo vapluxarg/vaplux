@@ -34,6 +34,14 @@ export async function getStaticProps({ params }) {
 
   if (error || !rawProduct) return { notFound: true }
 
+  // Fetch variants
+  const { data: rawVariants } = await supabase
+    .from('product_variants')
+    .select('*')
+    .eq('product_id', rawProduct.id)
+    .eq('is_active', true)
+    .order('created_at')
+
   const { data: rawRelated } = await supabase
     .from('products')
     .select('*, categories(name, slug)')
@@ -57,13 +65,14 @@ export async function getStaticProps({ params }) {
   return {
     props: {
       product: mapProd(rawProduct),
-      related: (rawRelated || []).map(mapProd)
+      related: (rawRelated || []).map(mapProd),
+      variants: rawVariants || []
     },
     revalidate: 60
   }
 }
 
-export default function ProductPage({ product, related }) {
+export default function ProductPage({ product, related, variants = [] }) {
   const { add } = useCart()
   const { currency, dolarBlue, formatPrice, getProductPrice, formatPromoPrice } = useCurrency()
   const images = [product?.image, product?.secondaryImage].filter(Boolean)
@@ -73,13 +82,17 @@ export default function ProductPage({ product, related }) {
     if (product?.id) trackProductEvent('view', product.id)
   }, [product?.id])
 
-  // WhatsApp direct purchase: fires whatsapp_checkout event
-  // (which atomically increments added_to_cart_count + whatsapp_clicks)
-  const handleWhatsApp = (p, qty = 1) => {
+  // WhatsApp direct purchase: includes variant if selected
+  const handleWhatsApp = (p, qty = 1, variant = null) => {
     trackProductEvent('whatsapp_checkout', p.id)
-    const unitPrice = getProductPrice(p)
+    const unitPrice = getProductPrice(variant ? {
+      price_usd: variant.price_usd,
+      price_ars: variant.price_ars,
+      preferred_currency: variant.preferred_currency
+    } : p)
     const lineTotal = unitPrice * qty
-    const msg = `Hola, equipo de Vaplux. 👋\n\nMe gustaría recibir más información o avanzar con la compra del siguiente producto:\n\n▪ ${p.name} (Cant: ${qty}) - ${formatPrice(lineTotal)}\n\n💰 *Total estimado:* ${formatPrice(lineTotal)}\n\nQuedo a la espera de los pasos a seguir. ¡Muchas gracias!`
+    const variantLine = variant ? `\n▪ Variante: *${variant.label}*` : ''
+    const msg = `Hola, equipo de Vaplux. 👋\n\nMe gustaría recibir más información o avanzar con la compra del siguiente producto:\n\n▪ ${p.name} (Cant: ${qty})${variantLine} - ${formatPrice(lineTotal)}\n\n💰 *Total estimado:* ${formatPrice(lineTotal)}\n\nQuedo a la espera de los pasos a seguir. ¡Muchas gracias!`
     window.open(getWhatsAppUrl(msg), '_blank')
   }
 
@@ -135,7 +148,7 @@ export default function ProductPage({ product, related }) {
             </div>
 
             <div className="relative">
-              <PurchasePanel product={product} onAdd={add} onWhatsApp={handleWhatsApp} onMeli={handleMeli} />
+              <PurchasePanel product={product} variants={variants} onAdd={add} onWhatsApp={handleWhatsApp} onMeli={handleMeli} />
             </div>
 
             {/* Service Highlights */}

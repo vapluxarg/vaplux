@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useEffect, useState, useRef } from 'react'
 import { useCart } from '@/context/CartContext'
 import { useCurrency } from '@/context/CurrencyContext'
+import { useCategories } from '@/context/CategoriesContext'
 import { supabase } from '@/utils/supabase'
 import { Search, ShoppingCart, X, Menu, Mail } from 'lucide-react'
 
@@ -21,17 +22,8 @@ export default function Navbar() {
   const servicesCloseTimer = useRef(null)
   const CLOSE_DELAY = 1000
 
-  const [categories, setCategories] = useState([])
+  const categories = useCategories()
 
-  useEffect(() => {
-    async function fetchCategories() {
-      const { data: cats } = await supabase.from('categories').select('*').eq('is_active', true).eq('store', 'vaplux').order('name')
-      if (cats) {
-        setCategories(cats)
-      }
-    }
-    fetchCategories()
-  }, [])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -105,6 +97,16 @@ export default function Navbar() {
               ))}
             </div>
           </div>
+
+          {/* Importados link */}
+          <li>
+            <Link
+              className="text-slate-700 text-sm font-medium inline-flex items-center gap-1 hover:text-brand transition-colors py-2"
+              href="/importados"
+            >
+              Importados
+            </Link>
+          </li>
 
           {/* Dropdown Servicio Técnico */}
           <div
@@ -235,8 +237,10 @@ export default function Navbar() {
                 {categories.map(c => (
                   <Link key={c.id} href={`/catalog/${c.slug}`} onClick={() => setOpen(false)} className="text-slate-600 hover:text-blue-600">{c.name}</Link>
                 ))}
+                <Link href="/importados" onClick={() => setOpen(false)} className="text-slate-600 hover:text-blue-600">Importados</Link>
               </div>
             </div>
+
 
             <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-100">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Servicios</p>

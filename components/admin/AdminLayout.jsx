@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useState, createContext, useContext } from 'react'
 import { supabase } from '@/utils/supabase'
-import { LayoutDashboard, Package, Zap, Tag, LogOut, Megaphone, Loader2 } from 'lucide-react'
+import { LayoutDashboard, Package, Zap, Tag, LogOut, Megaphone, Loader2, Percent, FlaskConical, Scale } from 'lucide-react'
 
 export const AdminContext = createContext()
 
@@ -116,6 +116,19 @@ export default function AdminLayout({ children }) {
             </Link>
             <Link href="/admin/promotions" className={`flex items-center gap-2 px-3 py-2 rounded-sm transition-colors text-xs font-medium ${router.pathname === '/admin/promotions' ? 'bg-orange-600/20 text-orange-400 border-l-2 border-orange-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white border-l-2 border-transparent'}`}>
               <Megaphone size={14} className="shrink-0" /> Promociones
+            </Link>
+            <Link href="/admin/discounts" className={`flex items-center gap-2 px-3 py-2 rounded-sm transition-colors text-xs font-medium ${router.pathname.startsWith('/admin/discounts') ? 'bg-green-600/20 text-green-400 border-l-2 border-green-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white border-l-2 border-transparent'}`}>
+              <Percent size={14} className="shrink-0" /> Descuentos
+            </Link>
+
+            <div className="my-1 border-t border-slate-800" />
+            <p className="text-[9px] uppercase tracking-widest text-slate-600 font-bold px-3 py-1">Análisis</p>
+
+            <Link href="/admin/analytics" className={`flex items-center gap-2 px-3 py-2 rounded-sm transition-colors text-xs font-medium ${router.pathname === '/admin/analytics' ? 'bg-violet-600/20 text-violet-400 border-l-2 border-violet-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white border-l-2 border-transparent'}`}>
+              <FlaskConical size={14} className="shrink-0" /> Sandbox
+            </Link>
+            <Link href="/admin/compare" className={`flex items-center gap-2 px-3 py-2 rounded-sm transition-colors text-xs font-medium ${router.pathname === '/admin/compare' ? 'bg-cyan-600/20 text-cyan-400 border-l-2 border-cyan-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white border-l-2 border-transparent'}`}>
+              <Scale size={14} className="shrink-0" /> Comparar Tiendas
             </Link>
           </nav>
 
