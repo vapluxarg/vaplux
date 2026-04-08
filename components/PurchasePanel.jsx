@@ -5,7 +5,7 @@
  *   - Variant products (selectors per attribute, price from selected variant)
  *   - Imported products (a pedido, no stock display)
  */
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { MessageCircle, ShoppingCart, ExternalLink, Clock, PackageCheck } from 'lucide-react'
 import { useCurrency } from '@/context/CurrencyContext'
 
@@ -40,6 +40,19 @@ export default function PurchasePanel({ product, variants = [], onAdd, onWhatsAp
   }, [variants, selectedAttrs, attributeKeys, hasVariants])
 
   const allAttrsSelected = attributeKeys.length > 0 && attributeKeys.every(k => selectedAttrs[k])
+
+  // Select cheapest variant by default
+  useEffect(() => {
+    if (hasVariants && variants.length > 0 && Object.keys(selectedAttrs).length === 0) {
+      const sorted = [...variants]
+        .map(v => ({ v, p: getProductPrice(v) }))
+        .filter(x => x.p > 0)
+        .sort((a, b) => a.p - b.p)
+      if (sorted.length > 0 && sorted[0].v.attributes) {
+        setSelectedAttrs(sorted[0].v.attributes)
+      }
+    }
+  }, [hasVariants, variants, selectedAttrs])
 
   // Price resolution
   const resolvedPrice = useMemo(() => {
