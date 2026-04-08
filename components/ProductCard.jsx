@@ -16,6 +16,19 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
   const handleAddToCart = (e) => {
     e.preventDefault()
     e.stopPropagation()
+    
+    // Check local computed flags
+    const hasVariants = !!product.has_variants
+    const isImported = !!product.is_imported
+    const isOutOfStockLocal = !isImported && !hasVariants && (product.stock === 0 || product.stock === null || product.stock === undefined)
+
+    if (isOutOfStockLocal) return
+
+    if (hasVariants) {
+      router.push(`/product/${product.slug}`)
+      return
+    }
+
     add(product)
     setAdded(true)
     setTimeout(() => setAdded(false), 1000)

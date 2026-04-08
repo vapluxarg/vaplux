@@ -16,15 +16,6 @@ export async function getStaticProps() {
     .limit(1)
     .maybeSingle()
 
-  // Fetch top 3 products by popularity for Hero
-  const { data: topProducts } = await supabase
-    .from('products')
-    .select('id, title, price_ars, price_usd, image_urls, preferred_currency, meli_clicks, added_to_cart_count, slug, has_promo, promo_price')
-    .eq('is_active', true)
-    .eq('store', 'vaplux')
-    .order('added_to_cart_count', { ascending: false })
-    .limit(3)
-
   // Fetch Categories
   const { data: categories } = await supabase
     .from('categories')
@@ -33,16 +24,27 @@ export async function getStaticProps() {
     .eq('store', 'vaplux')
     .order('name')
 
-  // Fetch all active products once to avoid N+1 queries
+  // Fetch all active products once to avoid N+1 queries. Include stat columns to compute popularity.
   const { data: allProducts } = await supabase
     .from('products')
-    .select('id, title, price_ars, price_usd, image_urls, preferred_currency, slug, has_promo, promo_price, category_id')
+    .select('id, title, price_ars, price_usd, image_urls, preferred_currency, slug, has_promo, promo_price, category_id, has_variants, is_imported, stock, product_variants(price_usd, price_ars, preferred_currency), views_count, whatsapp_clicks, meli_clicks, added_to_cart_count')
     .eq('is_active', true)
     .eq('store', 'vaplux')
 
+  const productsList = allProducts || []
+
+  // Compute top 3 products based on overall popularity
+  const topProducts = [...productsList]
+    .map(p => ({
+      ...p,
+      popularityScore: (p.views_count || 0) + (p.whatsapp_clicks || 0) + (p.meli_clicks || 0) + (p.added_to_cart_count || 0)
+    }))
+    .sort((a, b) => b.popularityScore - a.popularityScore)
+    .slice(0, 3)
+
   // Group products by category in memory (taking top 2 per category)
   const categoryProducts = (categories || []).map((cat) => {
-    const prods = (allProducts || [])
+    const prods = productsList
       .filter(p => p.category_id === cat.id)
       .slice(0, 2)
     return { ...cat, products: prods }
@@ -51,8 +53,8 @@ export async function getStaticProps() {
   return {
     props: { 
       activePromotion: promo || null,
-      topProducts: topProducts || [],
-      categoryProducts: categoryProducts || []
+      topProducts,
+      categoryProducts
     },
     revalidate: 60
   }

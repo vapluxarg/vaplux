@@ -59,7 +59,14 @@ export default function FeaturedHeroCards({ products = [] }) {
                 </h3>
                 <div className="mt-3">
                   <span className="text-blue-600 font-black text-xl md:text-2xl">
-                    {product.has_promo && product.promo_price ? formatPromoPrice(product) : formatPrice(getProductPrice(product))}
+                    {product.has_variants && product.product_variants?.length > 0 ? (
+                      <>
+                        <span className="text-[0.6em] font-semibold text-gray-500 mr-1">Desde</span>
+                        {formatPrice(Math.min(...product.product_variants.map(v => getProductPrice(v)).filter(p => p > 0)) || getProductPrice(product))}
+                      </>
+                    ) : (
+                      product.has_promo && product.promo_price ? formatPromoPrice(product) : formatPrice(getProductPrice(product))
+                    )}
                   </span>
                 </div>
                 <div className="mt-4 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">

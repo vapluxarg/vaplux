@@ -86,8 +86,15 @@ export default function HeroVisual({ topProducts = [] }){
 
                       <h3 className="font-bold text-gray-900 truncate">{p.title}</h3>
                       <div className="mt-2 flex items-center justify-between">
-                         <span className="text-blue-600 font-bold">
-                           {p.has_promo && p.promo_price ? formatPromoPrice(p) : formatPrice(getProductPrice(p))}
+                         <span className="text-blue-600 font-bold whitespace-nowrap">
+                           {p.has_variants && p.product_variants?.length > 0 ? (
+                             <>
+                               <span className="text-[0.6em] font-semibold text-gray-500 mr-1">Desde</span>
+                               {formatPrice(Math.min(...p.product_variants.map(v => getProductPrice(v)).filter(price => price > 0)) || getProductPrice(p))}
+                             </>
+                           ) : (
+                             p.has_promo && p.promo_price ? formatPromoPrice(p) : formatPrice(getProductPrice(p))
+                           )}
                          </span>
                          <a href={`/product/${p.slug || p.id}`} className="p-2 bg-blue-50 text-blue-600 rounded-lg"><ChevronRight size={16} /></a>
                       </div>
