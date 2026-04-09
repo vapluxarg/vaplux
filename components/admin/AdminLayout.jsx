@@ -20,6 +20,18 @@ export default function AdminLayout({ children }) {
     if (saved) setStore(saved)
   }, [])
 
+  // Handle ?store= query parameter
+  useEffect(() => {
+    if (!router.isReady) return
+    const qStore = router.query.store
+    if (qStore === 'vaplux' || qStore === 'fantech') {
+      if (qStore !== store) {
+        setStore(qStore)
+        localStorage.setItem('adminStore', qStore)
+      }
+    }
+  }, [router.isReady, router.query.store])
+
   const changeStore = (newStore) => {
     setStore(newStore)
     localStorage.setItem('adminStore', newStore)

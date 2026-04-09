@@ -57,8 +57,8 @@ export function CartProvider({ children }) {
         next[idx] = { ...next[idx], qty: next[idx].qty + qty }
         return next
       }
-
-      trackProductEvent('cart_add', product.id)
+ 
+      trackProductEvent('cart_add', product.id, variant?.id)
 
       setIsBouncing(true)
       setTimeout(() => setIsBouncing(false), 600)

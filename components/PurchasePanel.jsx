@@ -8,6 +8,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { MessageCircle, ShoppingCart, ExternalLink, Clock, PackageCheck } from 'lucide-react'
 import { useCurrency } from '@/context/CurrencyContext'
+import { trackProductEvent } from '@/utils/analytics'
 
 export default function PurchasePanel({ product, variants = [], onAdd, onWhatsApp, onMeli }) {
   const { formatPrice, formatPromoPrice, getProductPrice, dolarBlue, currency } = useCurrency()
@@ -53,6 +54,13 @@ export default function PurchasePanel({ product, variants = [], onAdd, onWhatsAp
       }
     }
   }, [hasVariants, variants, selectedAttrs])
+
+  // Track variant view whenever selection changes
+  useEffect(() => {
+    if (hasVariants && selectedVariant?.id) {
+      trackProductEvent('view', product.id, selectedVariant.id)
+    }
+  }, [selectedVariant?.id, product.id, hasVariants])
 
   // Price resolution
   const resolvedPrice = useMemo(() => {

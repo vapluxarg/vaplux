@@ -79,12 +79,16 @@ export default function ProductPage({ product, related, variants = [] }) {
 
   // Track view once per page load (fire-and-forget)
   useEffect(() => {
-    if (product?.id) trackProductEvent('view', product.id)
-  }, [product?.id])
+    // If it has NO variants, track base product view here.
+    // If it HAS variants, PurchasePanel will handle variant-specific tracking.
+    if (product?.id && variants.length === 0) {
+      trackProductEvent('view', product.id)
+    }
+  }, [product?.id, variants.length])
 
   // WhatsApp direct purchase: includes variant if selected
   const handleWhatsApp = (p, qty = 1, variant = null) => {
-    trackProductEvent('whatsapp_checkout', p.id)
+    trackProductEvent('whatsapp_checkout', p.id, variant?.id)
     const unitPrice = getProductPrice(variant ? {
       price_usd: variant.price_usd,
       price_ars: variant.price_ars,

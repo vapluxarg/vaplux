@@ -187,6 +187,7 @@ export default function AnalyticsSandbox({ allProducts, allCategories }) {
   const [sortCol, setSortCol] = useState('views')
   const [sortAsc, setSortAsc] = useState(false)
   const [events, setEvents] = useState([])
+  const [variantsData, setVariantsData] = useState([])
   const [loading, setLoading] = useState(false)
 
   const products = useMemo(() => allProducts.filter(p => !globalStore || p.store === globalStore), [allProducts, globalStore])
@@ -219,14 +220,25 @@ export default function AnalyticsSandbox({ allProducts, allCategories }) {
     if (!entityIds.length) { setEvents([]); setLoading(false); return }
 
     let q = supabase.from('analytics_events')
-      .select('id,event_type,entity_id,created_at')
+      .select('id,event_type,entity_id,variant_id,created_at')
       .eq('entity_type', 'product')
       .in('entity_id', entityIds)
       .order('created_at', { ascending: true })
     if (sinceDate) q = q.gte('created_at', sinceDate)
 
-    const { data } = await q
-    setEvents(data || [])
+    const { data: evData } = await q
+    setEvents(evData || [])
+
+    // Fetch variant labels for context
+    if (mode === 'product' && selectedIds.length > 0) {
+      const { data: vData } = await supabase.from('product_variants')
+        .select('id,product_id,label,views_count,added_to_cart_count,whatsapp_clicks,meli_clicks')
+        .in('product_id', entityIds)
+      setVariantsData(vData || [])
+    } else {
+      setVariantsData([])
+    }
+
     setLoading(false)
   }, [selectedIds, sinceDate, mode, products])
 
@@ -561,6 +573,52 @@ export default function AnalyticsSandbox({ allProducts, allCategories }) {
                   <Bar dataKey="Carrito" fill="#8b5cf6" radius={[0,3,3,0]} barSize={8} />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* ── Variants Breakdown ── */}
+          {mode === 'product' && selectedIds.length === 1 && variantsData.length > 0 && (
+            <div className="bg-white rounded-sm shadow-sm border border-slate-200 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
+                <Layers size={13} className="text-purple-500" />
+                <h3 className="text-xs font-bold text-slate-700">Desglose por Variante — {activeProds[0]?.title}</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <th className="px-4 py-2 text-left">Variante</th>
+                      <th className="px-4 py-2 text-center">Vistas (Período)</th>
+                      <th className="px-4 py-2 text-center">Carrito (Período)</th>
+                      <th className="px-4 py-2 text-center">WA (Período)</th>
+                      <th className="px-4 py-2 text-center border-l bg-blue-50/30">Vistas (Total)</th>
+                      <th className="px-4 py-2 text-center bg-violet-50/30">Carrito (Total)</th>
+                      <th className="px-4 py-2 text-center bg-emerald-50/30">WA (Total)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {variantsData.map(v => {
+                      const vEvents = events.filter(e => e.variant_id === v.id)
+                      const pViews = vEvents.filter(e => e.event_type === 'view').length
+                      const pWA    = vEvents.filter(e => e.event_type === 'whatsapp_checkout').length
+                      const pCart  = vEvents.filter(e => ['cart_add','whatsapp_checkout'].includes(e.event_type)).length
+                      
+                      return (
+                        <tr key={v.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="px-4 py-2 border-r border-slate-100 font-bold text-slate-700">{v.label}</td>
+                          <td className="px-4 py-2 text-center font-medium text-blue-600">{pViews.toLocaleString('es-AR')}</td>
+                          <td className="px-4 py-2 text-center font-medium text-violet-600">{pCart.toLocaleString('es-AR')}</td>
+                          <td className="px-4 py-2 text-center font-medium text-emerald-600">{pWA.toLocaleString('es-AR')}</td>
+                          
+                          <td className="px-4 py-2 text-center border-l bg-blue-50/20 text-blue-900">{v.views_count?.toLocaleString('es-AR') || 0}</td>
+                          <td className="px-4 py-2 text-center bg-violet-50/20 text-violet-900">{v.added_to_cart_count?.toLocaleString('es-AR') || 0}</td>
+                          <td className="px-4 py-2 text-center bg-emerald-50/20 text-emerald-900">{v.whatsapp_clicks?.toLocaleString('es-AR') || 0}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>

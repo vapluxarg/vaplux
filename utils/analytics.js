@@ -22,14 +22,16 @@ import { supabase } from '@/utils/supabase'
  *
  * @param {'view'|'cart_add'|'whatsapp_checkout'|'meli_click'} eventType
  * @param {string} productId  — UUID of the product
+ * @param {string} [variantId] — Optional UUID of the variant
  */
-export async function trackProductEvent(eventType, productId) {
+export async function trackProductEvent(eventType, productId, variantId = null) {
   if (!productId) return
 
   try {
     const { error } = await supabase.rpc('track_product_event', {
       p_product_id: productId,
       p_event_type: eventType,
+      p_variant_id: variantId
     })
     if (error) console.warn('[analytics] track error:', error.message)
   } catch (e) {
