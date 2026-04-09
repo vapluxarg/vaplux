@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
   Eye, MessageCircle, ShoppingCart, ExternalLink, TrendingUp,
   RefreshCw, Calendar, Package, Tag, SlidersHorizontal,
-  Search, ChevronDown, X, ArrowUpDown, FlaskConical
+  Search, ChevronDown, X, ArrowUpDown, FlaskConical, Layers
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
