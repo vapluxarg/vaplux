@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useMemo } from 'react'
-import { getDolarBlue } from '@/utils/dolar'
+import { getDolarBlue, getUsdtRate } from '@/utils/dolar'
 import formatCurrency from '@/utils/formatCurrency'
 import formatUSD from '@/utils/formatUSD'
 
@@ -8,18 +8,21 @@ const CurrencyContext = createContext(null)
 export function CurrencyProvider({ children }) {
   const [currency, setCurrency] = useState('ARS')
   const [dolarBlue, setDolarBlue] = useState(1200)
+  const [dolarCripto, setDolarCripto] = useState(1250)
 
   useEffect(() => {
     // Load preference
     const saved = localStorage.getItem('vaplux_currency')
     if (saved) setCurrency(saved)
 
-    // Fetch rate
-    async function fetchRate() {
-      const rate = await getDolarBlue()
-      setDolarBlue(rate)
+    // Fetch rates
+    async function fetchRates() {
+      const rateBlue = await getDolarBlue()
+      const rateCripto = await getUsdtRate()
+      setDolarBlue(rateBlue)
+      setDolarCripto(rateCripto)
     }
-    fetchRate()
+    fetchRates()
   }, [])
 
   const toggleCurrency = () => {
@@ -34,43 +37,70 @@ export function CurrencyProvider({ children }) {
       return currency === 'USD' ? formatUSD(p) : formatCurrency(p)
     }
 
-    // Regular price
+    // Determine the source price based on preferred_currency
+    let baseArs = 0
+    if (p.preferred_currency === 'usdt' && p.price_usdt) {
+      baseArs = Number(p.price_usdt) * dolarCripto
+    } else if (p.preferred_currency === 'usd' && p.price_usd) {
+      baseArs = Number(p.price_usd) * dolarBlue
+    } else if (p.price_ars) {
+      baseArs = Number(p.price_ars)
+    } else if (p.price_usd) {
+      baseArs = Number(p.price_usd) * dolarBlue
+    } else if (p.price_usdt) {
+      baseArs = Number(p.price_usdt) * dolarCripto
+    }
+
     if (currency === 'USD') {
-      const val = (p.price_usd && Number(p.price_usd) > 0) ? p.price_usd : (Number(p.price_ars || 0) / dolarBlue)
-      return formatUSD(val)
+      return formatUSD(baseArs / dolarBlue)
     } else {
-      const val = (p.price_ars && Number(p.price_ars) > 0) ? p.price_ars : (Number(p.price_usd || 0) * dolarBlue)
-      return formatCurrency(val)
+      return formatCurrency(baseArs)
     }
   }
 
   const formatPromoPrice = (p) => {
     if (!p || !p.promo_price) return ''
     const val = Number(p.promo_price)
-    if (p.preferred_currency === 'usd') {
-      return currency === 'USD' ? formatUSD(val) : formatCurrency(val * dolarBlue)
+
+    let baseArs = 0
+    if (p.preferred_currency === 'usdt') {
+      baseArs = val * dolarCripto
+    } else if (p.preferred_currency === 'usd') {
+      baseArs = val * dolarBlue
     } else {
-      return currency === 'ARS' ? formatCurrency(val) : formatUSD(val / dolarBlue)
+      baseArs = val
     }
+
+    return currency === 'USD' ? formatUSD(baseArs / dolarBlue) : formatCurrency(baseArs)
   }
 
   const getProductPrice = (p) => {
     if (!p) return 0
-    // Promo
-    if (p.has_promo && p.promo_price) {
-      const val = Number(p.promo_price)
-      if (p.preferred_currency === 'usd') {
-        return currency === 'USD' ? val : (val * dolarBlue)
-      } else {
-        return currency === 'ARS' ? val : (val / dolarBlue)
+
+    const isPromo = p.has_promo && p.promo_price
+    const priceVal = isPromo ? Number(p.promo_price) : null
+
+    let baseArs = 0
+    if (isPromo) {
+      if (p.preferred_currency === 'usdt') baseArs = priceVal * dolarCripto
+      else if (p.preferred_currency === 'usd') baseArs = priceVal * dolarBlue
+      else baseArs = priceVal
+    } else {
+      // Regular logic
+      if (p.preferred_currency === 'usdt' && p.price_usdt) {
+        baseArs = Number(p.price_usdt) * dolarCripto
+      } else if (p.preferred_currency === 'usd' && p.price_usd) {
+        baseArs = Number(p.price_usd) * dolarBlue
+      } else if (p.price_ars) {
+        baseArs = Number(p.price_ars)
+      } else if (p.price_usd) {
+        baseArs = Number(p.price_usd) * dolarBlue
+      } else if (p.price_usdt) {
+        baseArs = Number(p.price_usdt) * dolarCripto
       }
     }
-    // Regular
-    if (currency === 'USD') {
-      return (p.price_usd && Number(p.price_usd) > 0) ? Number(p.price_usd) : (Number(p.price_ars || 0) / dolarBlue)
-    } else {
-      return (p.price_ars && Number(p.price_ars) > 0) ? Number(p.price_ars) : (Number(p.price_usd || 0) * dolarBlue)
-    }
+
+    return currency === 'USD' ? (baseArs / dolarBlue) : baseArs
   }
 
   const calculateTotal = (items) => {
@@ -86,6 +116,7 @@ export function CurrencyProvider({ children }) {
     },
     toggleCurrency,
     dolarBlue,
+    dolarCripto,
     formatPrice,
     formatPromoPrice,
     getProductPrice,

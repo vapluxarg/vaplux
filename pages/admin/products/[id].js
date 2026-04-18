@@ -51,6 +51,7 @@ export default function EditProduct({ product, existingVariants }) {
   // Base pricing (used when no variants)
   const [priceArs, setPriceArs] = useState(product.price_ars || '')
   const [priceUsd, setPriceUsd] = useState(product.price_usd || '')
+  const [priceUsdt, setPriceUsdt] = useState(product.price_usdt || '')
   const [preferredCurrency, setPreferredCurrency] = useState(product.preferred_currency || 'usd')
   const [hasPromo, setHasPromo] = useState(product.has_promo || false)
   const [promoPrice, setPromoPrice] = useState(product.promo_price || '')
@@ -62,6 +63,7 @@ export default function EditProduct({ product, existingVariants }) {
     ...v,
     price_usd: v.price_usd ?? '',
     price_ars: v.price_ars ?? '',
+    price_usdt: v.price_usdt ?? '',
     stock: v.stock ?? (v.stock === null ? null : 0),
   })))
 
@@ -71,6 +73,15 @@ export default function EditProduct({ product, existingVariants }) {
     return product.image_urls.map(url => ({ preview: url, isExisting: true, url }))
   })
   const [video, setVideo] = useState(null)
+
+  const { dolarBlue, dolarCripto } = require('@/context/CurrencyContext').useCurrency()
+ 
+  const handleCurrencyChange = (newCurr) => {
+    setPreferredCurrency(newCurr);
+    if (hasVariants) {
+      setVariants(prev => prev.map(v => ({ ...v, preferred_currency: newCurr })));
+    }
+  };
 
   useEffect(() => {
     supabase.from('categories').select('*').then(({ data }) => setCategories(data || []))
@@ -117,6 +128,7 @@ export default function EditProduct({ product, existingVariants }) {
         subcategory_id: subcategoryId || null,
         price_ars: (!hasVariants && priceArs) ? Number(priceArs) : (product.price_ars || 0),
         price_usd: (!hasVariants && priceUsd) ? Number(priceUsd) : (product.price_usd || 0),
+        price_usdt: (!hasVariants && priceUsdt) ? Number(priceUsdt) : (product.price_usdt || 0),
         preferred_currency: preferredCurrency,
         has_promo: hasPromo,
         promo_price: hasPromo && promoPrice ? Number(promoPrice) : null,
@@ -142,6 +154,7 @@ export default function EditProduct({ product, existingVariants }) {
           attributes: v.attributes,
           price_usd: v.price_usd !== '' ? Number(v.price_usd) : null,
           price_ars: v.price_ars !== '' ? Number(v.price_ars) : null,
+          price_usdt: v.price_usdt !== '' ? Number(v.price_usdt) : null,
           preferred_currency: v.preferred_currency || 'usd',
           stock: isImported ? null : (v.stock !== null && v.stock !== '' ? Number(v.stock) : 0),
           is_active: true,
@@ -277,7 +290,7 @@ export default function EditProduct({ product, existingVariants }) {
               <p className="text-[11px] text-slate-500 mb-4">
                 Definí los atributos (ej: Color, Memoria). Luego presioná <strong>"Generar combinaciones"</strong> y completá precios y stock para cada una.
               </p>
-              <VariantsEditor variants={variants} onChange={setVariants} isImported={isImported} />
+              <VariantsEditor variants={variants} onChange={setVariants} isImported={isImported} preferredCurrency={preferredCurrency} onCurrencyChange={handleCurrencyChange} />
             </section>
           )}
 
@@ -298,64 +311,84 @@ export default function EditProduct({ product, existingVariants }) {
         {/* ── RIGHT COLUMN ── */}
         <div className="lg:col-span-1 space-y-6">
 
-          {/* BLOQUE: Precio base (solo si no tiene variantes) */}
-          {!hasVariants && (
-            <section className="bg-white p-5 rounded-sm shadow-sm border border-slate-200 border-t-2 border-t-emerald-500">
-              <h2 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                <DollarSign size={16} className="text-emerald-500" /> Precio Base
-              </h2>
+          {/* Configuración de Precios */}
+          <section className="bg-white p-5 rounded-sm shadow-sm border border-slate-200 border-t-2 border-t-emerald-500">
+            <h2 className="text-sm font-bold text-slate-800 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
+              <DollarSign size={16} className="text-emerald-500" /> Configuración de Precios
+            </h2>
 
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Moneda Base</label>
-                  <div className="flex bg-slate-100 p-0.5 rounded-sm border border-slate-200">
-                    <button type="button" onClick={() => setPreferredCurrency('usd')} className={`flex-1 py-1.5 font-bold rounded-sm text-xs transition-colors ${preferredCurrency==='usd' ? 'bg-white text-emerald-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-200'}`}>USD</button>
-                    <button type="button" onClick={() => setPreferredCurrency('ars')} className={`flex-1 py-1.5 font-bold rounded-sm text-xs transition-colors ${preferredCurrency==='ars' ? 'bg-white text-blue-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-200'}`}>ARS</button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className={`text-xs font-bold block mb-1 ${preferredCurrency==='usd' ? 'text-emerald-700' : 'text-slate-400'}`}>Precio USD</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
-                    <input type="number" value={priceUsd} onChange={e => setPriceUsd(e.target.value)} disabled={preferredCurrency==='ars'} className={`w-full bg-white border rounded-sm pl-6 pr-3 py-2 outline-none focus:ring-1 font-mono text-sm ${preferredCurrency==='usd' ? 'border-emerald-400 focus:ring-emerald-500' : 'border-slate-200 opacity-40'}`} placeholder="0" />
-                  </div>
-                </div>
-
-                <div>
-                  <label className={`text-xs font-bold block mb-1 ${preferredCurrency==='ars' ? 'text-blue-700' : 'text-slate-400'}`}>Precio ARS</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
-                    <input type="number" value={priceArs} onChange={e => setPriceArs(e.target.value)} disabled={preferredCurrency==='usd'} className={`w-full bg-white border rounded-sm pl-6 pr-3 py-2 outline-none focus:ring-1 font-mono text-sm ${preferredCurrency==='ars' ? 'border-blue-400 focus:ring-blue-500' : 'border-slate-200 opacity-40'}`} placeholder="0" />
-                  </div>
-                </div>
-
-                {/* Promo */}
-                <div className="border-t border-slate-100 pt-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-bold text-slate-700">Precio Promo</label>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input type="checkbox" checked={hasPromo} onChange={e => { setHasPromo(e.target.checked); if(!e.target.checked) setPromoPrice('') }} className="accent-orange-500 w-3.5 h-3.5" />
-                      <span className={`text-[10px] font-bold uppercase ${hasPromo ? 'text-orange-600' : 'text-slate-400'}`}>{hasPromo ? 'Activo' : 'Sin promo'}</span>
-                    </label>
-                  </div>
-                  {hasPromo && (
-                    <div>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400 font-bold text-xs">$</span>
-                        <input type="number" value={promoPrice} onChange={e => setPromoPrice(e.target.value)} className="w-full bg-orange-50 border border-orange-300 rounded-sm pl-6 pr-3 py-2 outline-none focus:ring-1 focus:ring-orange-400 font-mono text-sm" placeholder="Precio con descuento" />
-                      </div>
-                      {promoPrice && (preferredCurrency==='ars' ? priceArs : priceUsd) && (
-                        <p className="text-[10px] text-emerald-600 font-bold mt-1">
-                          Descuento: {(100 - (Number(promoPrice) / Number(preferredCurrency==='ars' ? priceArs : priceUsd)) * 100).toFixed(0)}% OFF
-                        </p>
-                      )}
-                    </div>
-                  )}
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Moneda Base</label>
+                <div className="flex bg-slate-100 p-0.5 rounded-sm border border-slate-200">
+                  <button type="button" onClick={() => handleCurrencyChange('usd')} className={`flex-1 py-1.5 font-bold rounded-sm text-xs transition-colors ${preferredCurrency==='usd' ? 'bg-white text-emerald-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-200'}`}>USD</button>
+                  <button type="button" onClick={() => handleCurrencyChange('ars')} className={`flex-1 py-1.5 font-bold rounded-sm text-xs transition-colors ${preferredCurrency==='ars' ? 'bg-white text-blue-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-200'}`}>ARS</button>
+                  <button type="button" onClick={() => handleCurrencyChange('usdt')} className={`flex-1 py-1.5 font-bold rounded-sm text-xs transition-colors ${preferredCurrency==='usdt' ? 'bg-white text-orange-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:bg-slate-200'}`}>USDT</button>
                 </div>
               </div>
-            </section>
-          )}
+
+              {!hasVariants && (
+                <>
+                  <div>
+                    <label className={`text-xs font-bold block mb-1 ${preferredCurrency==='usd' ? 'text-emerald-700' : 'text-slate-400'}`}>Precio USD</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
+                      <input type="number" value={priceUsd} onChange={e => setPriceUsd(e.target.value)} disabled={preferredCurrency!=='usd'} className={`w-full bg-white border rounded-sm pl-6 pr-3 py-2 outline-none focus:ring-1 font-mono text-sm ${preferredCurrency==='usd' ? 'border-emerald-400 focus:ring-emerald-500' : 'border-slate-200 opacity-40'}`} placeholder="0" />
+                    </div>
+                    {preferredCurrency !== 'usd' && (
+                      <p className="text-[10px] text-slate-400 mt-1 italic">≈ {((preferredCurrency === 'ars' ? Number(priceArs) : Number(priceUsdt) * dolarCripto) / dolarBlue).toFixed(1)} USD</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className={`text-xs font-bold block mb-1 ${preferredCurrency==='ars' ? 'text-blue-700' : 'text-slate-400'}`}>Precio ARS</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
+                      <input type="number" value={priceArs} onChange={e => setPriceArs(e.target.value)} disabled={preferredCurrency!=='ars'} className={`w-full bg-white border rounded-sm pl-6 pr-3 py-2 outline-none focus:ring-1 font-mono text-sm ${preferredCurrency==='ars' ? 'border-blue-400 focus:ring-blue-500' : 'border-slate-200 opacity-40'}`} placeholder="0" />
+                    </div>
+                    {preferredCurrency !== 'ars' && (
+                      <p className="text-[10px] text-slate-400 mt-1 italic">≈ {(preferredCurrency === 'usd' ? Number(priceUsd) * dolarBlue : Number(priceUsdt) * dolarCripto).toFixed(0)} ARS</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className={`text-xs font-bold block mb-1 ${preferredCurrency==='usdt' ? 'text-orange-700' : 'text-slate-400'}`}>Precio USDT</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">$</span>
+                      <input type="number" value={priceUsdt} onChange={e => setPriceUsdt(e.target.value)} disabled={preferredCurrency!=='usdt'} className={`w-full bg-white border rounded-sm pl-6 pr-3 py-2 outline-none focus:ring-1 font-mono text-sm ${preferredCurrency==='usdt' ? 'border-orange-400 focus:ring-orange-500' : 'border-slate-200 opacity-40'}`} placeholder="0" />
+                    </div>
+                    {preferredCurrency !== 'usdt' && (
+                      <p className="text-[10px] text-slate-400 mt-1 italic">≈ {((preferredCurrency === 'usd' ? Number(priceUsd) * dolarBlue : Number(priceArs)) / dolarCripto).toFixed(1)} USDT</p>
+                    )}
+                  </div>
+
+                  {/* Promo */}
+                  <div className="border-t border-slate-100 pt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-slate-700">Precio Promo</label>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" checked={hasPromo} onChange={e => { setHasPromo(e.target.checked); if(!e.target.checked) setPromoPrice('') }} className="accent-orange-500 w-3.5 h-3.5" />
+                        <span className={`text-[10px] font-bold uppercase ${hasPromo ? 'text-orange-600' : 'text-slate-400'}`}>{hasPromo ? 'Activo' : 'Sin promo'}</span>
+                      </label>
+                    </div>
+                    {hasPromo && (
+                      <div>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-orange-400 font-bold text-xs">$</span>
+                          <input type="number" value={promoPrice} onChange={e => setPromoPrice(e.target.value)} className="w-full bg-orange-50 border border-orange-300 rounded-sm pl-6 pr-3 py-2 outline-none focus:ring-1 focus:ring-orange-400 font-mono text-sm" placeholder="Precio con descuento" />
+                        </div>
+                        {promoPrice && (preferredCurrency==='ars' ? priceArs : priceUsd) && (
+                          <p className="text-[10px] text-emerald-600 font-bold mt-1">
+                            Descuento: {(100 - (Number(promoPrice) / Number(preferredCurrency==='ars' ? priceArs : priceUsd)) * 100).toFixed(0)}% OFF
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
 
           {hasVariants && (
             <div className="bg-purple-50 border border-purple-200 rounded-sm p-4 text-xs text-purple-700 flex items-start gap-2">

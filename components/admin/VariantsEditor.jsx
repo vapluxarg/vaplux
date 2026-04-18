@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Trash2, GitMerge, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Trash2, GitMerge, ChevronDown, ChevronUp, Globe } from 'lucide-react'
 
 /**
  * Generates all combinations from attribute groups.
@@ -30,11 +30,12 @@ function buildLabel(attrs) {
 /**
  * VariantsEditor
  * Props:
- *   - variants: array of { id?, label, attributes, price_usd, price_ars, preferred_currency, stock }
+ *   - variants: array of { id?, label, attributes, price_usd, price_ars, price_usdt, preferred_currency, stock }
  *   - onChange: (variants) => void
  *   - isImported: bool (if true, stock fields are hidden)
+ *   - preferredCurrency: string (the currency chosen at product level)
  */
-export default function VariantsEditor({ variants = [], onChange, isImported = false }) {
+export default function VariantsEditor({ variants = [], onChange, isImported = false, preferredCurrency = 'usd', onCurrencyChange }) {
   // attribute groups: { [domainName]: string[] }
   const [attrGroups, setAttrGroups] = useState(() => {
     // Reconstruct from existing variants
@@ -103,14 +104,15 @@ export default function VariantsEditor({ variants = [], onChange, isImported = f
             id: null,
             label,
             attributes: attrs,
-            price_usd: '',
-            price_ars: '',
-            preferred_currency: 'usd',
-            stock: isImported ? null : 0,
-          }
+             price_usd: '',
+             price_ars: '',
+             price_usdt: '',
+             preferred_currency: preferredCurrency,
+             stock: isImported ? null : 0,
+           }
     })
-    onChange(updated)
-  }, [attrGroups, isImported])
+     onChange(updated)
+   }, [attrGroups, isImported, preferredCurrency])
 
   const updateVariant = (idx, field, value) => {
     const next = variants.map((v, i) => i === idx ? { ...v, [field]: value } : v)
@@ -118,9 +120,37 @@ export default function VariantsEditor({ variants = [], onChange, isImported = f
   }
 
   const hasGroups = Object.keys(attrGroups).length > 0
+  const { dolarBlue, dolarCripto } = require('@/context/CurrencyContext').useCurrency()
 
   return (
     <div className="space-y-4">
+      {/* Currency Sync Selector */}
+      {onCurrencyChange && (
+        <div className="bg-slate-50 border border-slate-200 rounded-sm p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Globe size={16} className="text-slate-500" />
+            <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Moneda de Variantes</span>
+          </div>
+          <div className="flex bg-white p-0.5 rounded-sm border border-slate-200 shadow-sm">
+            <button
+              type="button"
+              onClick={() => onCurrencyChange('usd')}
+              className={`px-4 py-1 font-bold rounded-sm text-[10px] transition-colors ${preferredCurrency === 'usd' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-100'}`}
+            >USD</button>
+            <button
+              type="button"
+              onClick={() => onCurrencyChange('ars')}
+              className={`px-4 py-1 font-bold rounded-sm text-[10px] transition-colors ${preferredCurrency === 'ars' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-100'}`}
+            >ARS</button>
+            <button
+              type="button"
+              onClick={() => onCurrencyChange('usdt')}
+              className={`px-4 py-1 font-bold rounded-sm text-[10px] transition-colors ${preferredCurrency === 'usdt' ? 'bg-orange-600 text-white shadow-sm' : 'text-slate-400 hover:bg-slate-100'}`}
+            >USDT</button>
+          </div>
+        </div>
+      )}
+
       {/* Attribute Domains Builder */}
       <div className="space-y-3">
         {Object.entries(attrGroups).map(([domain, values]) => (
@@ -207,9 +237,9 @@ export default function VariantsEditor({ variants = [], onChange, isImported = f
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-500">
                     <th className="px-3 py-2 text-left font-bold">Variante</th>
-                    <th className="px-3 py-2 text-center font-bold">Moneda</th>
-                    <th className="px-3 py-2 text-right font-bold">Precio USD</th>
-                    <th className="px-3 py-2 text-right font-bold">Precio ARS</th>
+                    <th className="px-3 py-2 text-right font-bold">P. USD</th>
+                    <th className="px-3 py-2 text-right font-bold">P. ARS</th>
+                    <th className="px-3 py-2 text-right font-bold">P. USDT</th>
                     {!isImported && <th className="px-3 py-2 text-center font-bold">Stock</th>}
                   </tr>
                 </thead>
@@ -217,45 +247,59 @@ export default function VariantsEditor({ variants = [], onChange, isImported = f
                   {variants.map((v, i) => (
                     <tr key={v.label} className="hover:bg-slate-50">
                       <td className="px-3 py-1.5 font-semibold text-slate-800">{v.label}</td>
-                      <td className="px-3 py-1.5 text-center">
-                        <div className="flex bg-slate-100 p-0.5 rounded-sm border border-slate-200 w-fit mx-auto">
-                          <button
-                            type="button"
-                            onClick={() => updateVariant(i, 'preferred_currency', 'usd')}
-                            className={`px-2 py-0.5 text-[10px] font-bold rounded-sm transition-colors ${v.preferred_currency === 'usd' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
-                          >USD</button>
-                          <button
-                            type="button"
-                            onClick={() => updateVariant(i, 'preferred_currency', 'ars')}
-                            className={`px-2 py-0.5 text-[10px] font-bold rounded-sm transition-colors ${v.preferred_currency === 'ars' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500'}`}
-                          >ARS</button>
-                        </div>
-                      </td>
                       <td className="px-3 py-1.5 text-right">
                         <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">$</span>
+                          <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-400 text-[9px] font-bold">$</span>
                           <input
                             type="number"
                             value={v.price_usd ?? ''}
                             onChange={e => updateVariant(i, 'price_usd', e.target.value)}
-                            className={`w-24 border rounded-sm pl-5 pr-2 py-1 text-right outline-none focus:ring-1 font-mono text-[11px] ${v.preferred_currency === 'usd' ? 'border-emerald-400 bg-emerald-50/50 focus:ring-emerald-400' : 'border-slate-200 bg-white'}`}
+                            className={`w-20 border rounded-sm pl-4 pr-1 py-1 text-right outline-none focus:ring-1 font-mono text-[10px] ${preferredCurrency === 'usd' ? 'border-emerald-400 bg-emerald-50/50 focus:ring-emerald-400' : 'border-slate-200 bg-white cursor-not-allowed'}`}
                             placeholder="0"
-                            disabled={v.preferred_currency === 'ars'}
+                            disabled={preferredCurrency !== 'usd'}
                           />
                         </div>
+                        {preferredCurrency !== 'usd' && (
+                          <p className="text-[9px] text-slate-400 mt-0.5">
+                            ≈ {((preferredCurrency === 'ars' ? (Number(v.price_ars) || 0) : (Number(v.price_usdt) || 0) * dolarCripto) / dolarBlue).toFixed(1)}
+                          </p>
+                        )}
                       </td>
                       <td className="px-3 py-1.5 text-right">
                         <div className="relative">
-                          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">$</span>
+                          <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-400 text-[9px] font-bold">$</span>
                           <input
                             type="number"
                             value={v.price_ars ?? ''}
                             onChange={e => updateVariant(i, 'price_ars', e.target.value)}
-                            className={`w-24 border rounded-sm pl-5 pr-2 py-1 text-right outline-none focus:ring-1 font-mono text-[11px] ${v.preferred_currency === 'ars' ? 'border-blue-400 bg-blue-50/50 focus:ring-blue-400' : 'border-slate-200 bg-white'}`}
+                            className={`w-20 border rounded-sm pl-4 pr-1 py-1 text-right outline-none focus:ring-1 font-mono text-[10px] ${preferredCurrency === 'ars' ? 'border-blue-400 bg-blue-50/50 focus:ring-blue-400' : 'border-slate-200 bg-white cursor-not-allowed'}`}
                             placeholder="0"
-                            disabled={v.preferred_currency === 'usd'}
+                            disabled={preferredCurrency !== 'ars'}
                           />
                         </div>
+                         {preferredCurrency !== 'ars' && (
+                           <p className="text-[9px] text-slate-400 mt-0.5">
+                             ≈ {((preferredCurrency === 'usd' ? (Number(v.price_usd) || 0) * dolarBlue : (Number(v.price_usdt) || 0) * dolarCripto)).toFixed(0)}
+                           </p>
+                         )}
+                      </td>
+                      <td className="px-3 py-1.5 text-right">
+                        <div className="relative">
+                          <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-400 text-[9px] font-bold">$</span>
+                          <input
+                            type="number"
+                            value={v.price_usdt ?? ''}
+                            onChange={e => updateVariant(i, 'price_usdt', e.target.value)}
+                            className={`w-20 border rounded-sm pl-4 pr-1 py-1 text-right outline-none focus:ring-1 font-mono text-[10px] ${preferredCurrency === 'usdt' ? 'border-orange-400 bg-orange-50/50 focus:ring-orange-400' : 'border-slate-200 bg-white cursor-not-allowed'}`}
+                            placeholder="0"
+                            disabled={preferredCurrency !== 'usdt'}
+                          />
+                        </div>
+                        {preferredCurrency !== 'usdt' && (
+                          <p className="text-[9px] text-slate-400 mt-0.5">
+                            ≈ {((preferredCurrency === 'usd' ? (Number(v.price_usd) || 0) * dolarBlue : (Number(v.price_ars) || 0)) / dolarCripto).toFixed(1)}
+                          </p>
+                        )}
                       </td>
                       {!isImported && (
                         <td className="px-3 py-1.5 text-center">

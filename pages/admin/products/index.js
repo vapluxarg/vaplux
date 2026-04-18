@@ -3,13 +3,13 @@ import Link from 'next/link'
 import AdminLayout, { useAdmin } from '@/components/admin/AdminLayout'
 import { supabase } from '@/utils/supabase'
 import { toPng } from 'html-to-image'
-import { getDolarBlue } from '@/utils/dolar'
+import { getDolarBlue, getUsdtRate } from '@/utils/dolar'
 import { Download, Package, Edit, Trash2, FileText, Camera } from 'lucide-react'
 
 export async function getServerSideProps() {
   const { data: products } = await supabase
     .from('products')
-    .select('*, categories(name), product_variants(id, label, price_usd, price_ars, preferred_currency, stock)')
+    .select('*, categories(name), product_variants(id, label, price_usd, price_ars, price_usdt, preferred_currency, stock)')
     .order('created_at', { ascending: false })
     
   const { data: categories } = await supabase.from('categories').select('*')
@@ -26,9 +26,11 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportCurrency, setExportCurrency] = useState('original') // original, usd, ars
   const [dolarRate, setDolarRate] = useState(1200)
+  const [usdtRate, setUsdtRate] = useState(1250)
 
   useEffect(() => {
     getDolarBlue().then(rate => setDolarRate(rate))
+    getUsdtRate().then(rate => setUsdtRate(rate))
   }, [])
   
   const toggleActive = async (id, currentStatus) => {
@@ -53,14 +55,27 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
 
   const handleExport = async (format) => {
     // Helper: resolve price string for a simple product or variant
-    const resolvePrice = (priceUsd, priceArs, preferredCurrency) => {
+    const resolvePrice = (priceUsd, priceArs, priceUsdt, preferredCurrency) => {
       if (exportCurrency === 'original') {
+        if (preferredCurrency === 'usdt') return `USDT ${priceUsdt}`
         return preferredCurrency === 'usd' ? `U$D ${priceUsd}` : `$ ${priceArs}`
       } else if (exportCurrency === 'usd') {
-        const val = preferredCurrency === 'usd' ? priceUsd : (priceArs / dolarRate)
+        let val = 0
+        if (preferredCurrency === 'usd') val = priceUsd
+        else if (preferredCurrency === 'usdt') val = priceUsdt
+        else val = (priceArs / dolarRate)
         return `U$D ${Math.round(val)}`
+      } else if (exportCurrency === 'usdt') {
+        let val = 0
+        if (preferredCurrency === 'usdt') val = priceUsdt
+        else if (preferredCurrency === 'usd') val = (priceUsd * dolarRate) / usdtRate
+        else val = (priceArs / usdtRate)
+        return `USDT ${val.toFixed(2)}`
       } else {
-        const val = preferredCurrency === 'ars' ? priceArs : (priceUsd * dolarRate)
+        let val = 0
+        if (preferredCurrency === 'ars') val = priceArs
+        else if (preferredCurrency === 'usdt') val = priceUsdt * usdtRate
+        else val = (priceUsd * dolarRate)
         return `$ ${Math.round(val)}`
       }
     }
@@ -73,7 +88,7 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
 
       if (p.is_imported) {
         // Imported: always included, real price, no stock
-        rows.push({ category: cat, name: p.title, price: resolvePrice(p.price_usd, p.price_ars, p.preferred_currency), stock: null, isImported: true, isVariant: false, parentName: null })
+        rows.push({ category: cat, name: p.title, price: resolvePrice(p.price_usd, p.price_ars, p.price_usdt, p.preferred_currency), stock: null, isImported: true, isVariant: false, parentName: null })
 
       } else if (p.has_variants && p.product_variants?.length > 0) {
         // Variants: include product if at least one variant has stock
@@ -85,7 +100,7 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
             category: i === 0 ? cat : '',       // only show category on first row
             name: i === 0 ? p.title : '',        // only show name on first row
             variantLabel: v.label,
-            price: resolvePrice(v.price_usd, v.price_ars, v.preferred_currency),
+            price: resolvePrice(v.price_usd, v.price_ars, v.price_usdt, v.preferred_currency),
             stock: v.stock ?? null,
             isImported: false,
             isVariant: true,
@@ -100,7 +115,7 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
         rows.push({
           category: cat,
           name: p.title,
-          price: resolvePrice(p.price_usd, p.price_ars, p.preferred_currency),
+          price: resolvePrice(p.price_usd, p.price_ars, p.price_usdt, p.preferred_currency),
           stock: p.stock,
           isImported: false,
           isVariant: false,
@@ -142,7 +157,7 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
         const isVariantSub   = r.isVariant && !r.isFirstVariant
         const isVariantFirst = r.isVariant && r.isFirstVariant
         const bgColor        = isImportedRow ? '#fffbeb' : isVariantSub ? '#fafafa' : 'white'
-        const priceColor     = isImportedRow ? '#b45309' : r.price.includes('U$D') ? '#047857' : '#1d4ed8'
+        const priceColor     = isImportedRow ? '#b45309' : r.price.includes('USDT') ? '#f97316' : r.price.includes('U$D') ? '#047857' : '#1d4ed8'
         const stockBg    = r.stock > 4 ? '#dcfce7' : r.stock > 0 ? '#fef9c3' : r.stock === 0 ? '#fee2e2' : 'transparent'
         const stockColor = r.stock > 4 ? '#166534' : r.stock > 0 ? '#854d0e' : r.stock === 0 ? '#991b1b' : '#94a3b8'
         const stockCell  = isImportedRow
@@ -169,8 +184,11 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
       container.innerHTML = `
         <div style="padding: 28px; background: white; font-family: sans-serif; width: 100%; color: #1e293b; box-sizing: border-box;">
           <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
-            <h2 style="font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Lista de Precios · ${globalStore.toUpperCase()}</h2>
-            <span style="font-size: 11px; color: #94a3b8;">Dólar: $${dolarRate}</span>
+            <h2 style="font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Lista de Precios · {globalStore.toUpperCase()}</h2>
+            <div style="text-align: right; line-height: 1.2;">
+              <div style="font-size: 11px; color: #94a3b8; font-weight: bold;">Dólar Blue: $${dolarRate}</div>
+              <div style="font-size: 11px; color: #f97316; font-weight: bold;">USDT: $${usdtRate}</div>
+            </div>
           </div>
           <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
             <thead>
@@ -224,6 +242,10 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
            </select>
          </div>
          <div className="flex items-center gap-2">
+           <div className="hidden md:flex flex-col text-right mr-3 pr-4 border-r border-slate-200 leading-[1.15]">
+             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">USD: <span className="text-emerald-600">${dolarRate}</span></span>
+             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">USDT: <span className="text-orange-600">${usdtRate}</span></span>
+           </div>
            <button onClick={() => setShowExportModal(true)} className="text-xs bg-slate-100 border border-slate-300 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-sm font-semibold transition-colors flex items-center gap-1"><Download size={14} /> Exportar Lista</button>
            <Link href="/admin/products/new" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-sm font-semibold transition-colors text-xs shadow-sm flex items-center gap-1">
               + Nuevo Producto
@@ -238,8 +260,8 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
               <tr className="bg-slate-100 border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-600">
                 <th className="px-3 py-2 text-left">SKU / Producto</th>
                 <th className="px-3 py-2 text-left">Categoría</th>
-                <th className="px-3 py-2 text-right">Precio USD</th>
-                <th className="px-3 py-2 text-right">Precio ARS</th>
+                <th className="px-3 py-2 text-center">Moneda</th>
+                <th className="px-3 py-2 text-right">Precio</th>
                 <th className="px-3 py-2 text-center">Stock</th>
                 <th className="px-3 py-2 text-center">Tipo</th>
                 <th className="px-3 py-2 text-center">Tienda</th>
@@ -263,11 +285,19 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
                     </div>
                   </td>
                   <td className="px-3 py-1.5 text-slate-600 truncate max-w-[120px]" title={p.categories?.name}>{p.categories?.name || '-'}</td>
-                  <td className="px-3 py-1.5 text-right font-mono font-medium text-emerald-700">
-                    {p.has_variants ? <span className="text-slate-400 text-[10px] italic">ver variantes</span> : <span className={p.preferred_currency === 'usd' ? 'font-bold' : 'opacity-70'}>{p.price_usd || 0}</span>}
+                  <td className="px-3 py-1.5 text-center">
+                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-sm uppercase ${p.preferred_currency === 'usdt' ? 'bg-orange-100 text-orange-700' : p.preferred_currency === 'usd' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {p.preferred_currency}{p.has_variants ? ' (Var)' : ''}
+                    </span>
                   </td>
-                  <td className="px-3 py-1.5 text-right font-mono font-medium text-blue-700">
-                    {p.has_variants ? <span className="text-slate-400 text-[10px] italic">ver variantes</span> : <span className={p.preferred_currency === 'ars' ? 'font-bold' : 'opacity-70'}>{p.price_ars || 0}</span>}
+                  <td className="px-3 py-1.5 text-right font-mono font-bold">
+                    {p.has_variants ? (
+                      <span className="text-slate-400 text-[10px] italic">variantes</span>
+                    ) : (
+                      <span className={p.preferred_currency === 'usdt' ? 'text-orange-700' : p.preferred_currency === 'usd' ? 'text-emerald-700' : 'text-blue-700'}>
+                        {p.preferred_currency === 'usdt' ? p.price_usdt : p.preferred_currency === 'usd' ? p.price_usd : p.price_ars}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-1.5 text-center">
                     {p.is_imported ? (
@@ -349,7 +379,15 @@ export default function AdminProducts({ initialProducts, initialCategories }) {
                 <input type="radio" checked={exportCurrency==='ars'} onChange={() => setExportCurrency('ars')} className="text-sky-600" />
                 <div className="flex-1">
                   <div className="text-sm font-bold text-slate-800">Todo en Pesos (ARS)</div>
-                  <div className="text-[10px] text-slate-500">Convierte los USD a pesos usando Dólar Venta: ${dolarRate}</div>
+                  <div className="text-[10px] text-slate-500">Convierte los USD/USDT a pesos usando cotización actual.</div>
+                </div>
+              </label>
+
+              <label className={`flex items-center gap-3 p-3 border rounded-sm cursor-pointer transition-colors ${exportCurrency==='usdt' ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 hover:bg-slate-50'}`}>
+                <input type="radio" checked={exportCurrency==='usdt'} onChange={() => setExportCurrency('usdt')} className="text-orange-600" />
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-800">Todo en USDT</div>
+                  <div className="text-[10px] text-slate-500">Convierte los ARS/USD a USDT usando cotización actual: ${usdtRate}</div>
                 </div>
               </label>
             </div>
