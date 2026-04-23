@@ -1,5 +1,11 @@
-const RAW_NUMBERS = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5492216703630'
+const RAW_NUMBERS = String(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5492216703630')
 const WHATSAPP_NUMBERS = RAW_NUMBERS.split(',').map(n => n.trim()).filter(Boolean)
+
+/**
+ * For compatibility with files that might import the singular number.
+ * Returns the first number from the list.
+ */
+export const WHATSAPP_NUMBER = WHATSAPP_NUMBERS[0]
 
 export function getWhatsAppNumber() {
   if (typeof window === 'undefined') return WHATSAPP_NUMBERS[0]
@@ -12,19 +18,20 @@ export function getWhatsAppNumber() {
 
     const randomIndex = Math.floor(Math.random() * WHATSAPP_NUMBERS.length)
     const picked = WHATSAPP_NUMBERS[randomIndex]
-    localStorage.setItem('assigned_whatsapp_number', picked)
-    return picked
+    if (picked) {
+      localStorage.setItem('assigned_whatsapp_number', picked)
+      return picked
+    }
   } catch (e) {
-    // Fallback if localStorage is disabled
-    return WHATSAPP_NUMBERS[0]
+    console.warn('Error accessing localStorage:', e)
   }
+  return WHATSAPP_NUMBERS[0]
 }
 
 export function getWhatsAppUrl(msg = '') {
   const number = getWhatsAppNumber()
-  return msg 
-    ? `https://wa.me/${number}?text=${encodeURIComponent(msg)}`
-    : `https://wa.me/${number}`
+  if (!msg) return `https://wa.me/${number}`
+  return `https://wa.me/${number}?text=${encodeURIComponent(msg)}`
 }
 
 /**
