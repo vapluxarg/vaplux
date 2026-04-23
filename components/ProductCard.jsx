@@ -59,9 +59,10 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
     ? Math.round(100 - (Number(product.promo_price) / Number(basePrice)) * 100)
     : 0
 
+  const PLACEHOLDER_IMAGE = 'https://placehold.co/600x600/1e293b/cbd5e1?text=Sin+Imagen'
+
   const resolveSrc = (src) => {
-    if (!src) return src
-    // Prefijar basePath sólo para rutas locales absolutas
+    if (!src || typeof src !== 'string') return PLACEHOLDER_IMAGE
     if (src.startsWith('/')) return `${router.basePath || ''}${src}`
     return src
   }

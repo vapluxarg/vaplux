@@ -3,14 +3,19 @@ import { useRouter } from 'next/router'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function ProductGallery({ images = [], alt = 'Producto', compact = false, showThumbnails = true }) {
-  const safeImages = Array.isArray(images) && images.length > 0 ? images : [images].filter(Boolean)
+  const rawImages = Array.isArray(images) ? images : [images]
+  const safeImages = rawImages.filter(Boolean)
+  if (safeImages.length === 0) safeImages.push(null)
   const [active, setActive] = useState(0)
   const router = useRouter()
   const scrollRef = useRef(null)
 
+  const PLACEHOLDER_IMAGE = 'https://placehold.co/600x600/1e293b/cbd5e1?text=Sin+Imagen'
+
   const resolveSrc = (src) => {
-    if (!src) return src
-    return src.startsWith('/') ? `${router.basePath || ''}${src}` : src
+    if (!src || typeof src !== 'string') return PLACEHOLDER_IMAGE
+    if (src.startsWith('/')) return `${router.basePath || ''}${src}`
+    return src
   }
 
   const scrollToImage = (index) => {
@@ -32,8 +37,6 @@ export default function ProductGallery({ images = [], alt = 'Producto', compact 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [active, safeImages.length])
-
-  if (safeImages.length === 0) return null
 
   return (
     <div className="w-full flex flex-col md:flex-row gap-6 items-start">
