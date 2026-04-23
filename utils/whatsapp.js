@@ -1,9 +1,30 @@
-export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5492216703630'
+const RAW_NUMBERS = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5492216703630'
+const WHATSAPP_NUMBERS = RAW_NUMBERS.split(',').map(n => n.trim()).filter(Boolean)
+
+export function getWhatsAppNumber() {
+  if (typeof window === 'undefined') return WHATSAPP_NUMBERS[0]
+
+  try {
+    const stored = localStorage.getItem('assigned_whatsapp_number')
+    if (stored && WHATSAPP_NUMBERS.includes(stored)) {
+      return stored
+    }
+
+    const randomIndex = Math.floor(Math.random() * WHATSAPP_NUMBERS.length)
+    const picked = WHATSAPP_NUMBERS[randomIndex]
+    localStorage.setItem('assigned_whatsapp_number', picked)
+    return picked
+  } catch (e) {
+    // Fallback if localStorage is disabled
+    return WHATSAPP_NUMBERS[0]
+  }
+}
 
 export function getWhatsAppUrl(msg = '') {
+  const number = getWhatsAppNumber()
   return msg 
-    ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`
-    : `https://wa.me/${WHATSAPP_NUMBER}`
+    ? `https://wa.me/${number}?text=${encodeURIComponent(msg)}`
+    : `https://wa.me/${number}`
 }
 
 /**
