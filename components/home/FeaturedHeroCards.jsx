@@ -36,13 +36,13 @@ export default function FeaturedHeroCards({ products = [] }) {
           >
             <div className="bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-gray-100 p-4 md:p-5 w-[180px] md:w-[240px] backdrop-blur-md bg-white/95 transition-transform hover:-translate-y-2">
               {/* Image Container */}
-              <div className="relative aspect-square w-full mb-4 overflow-hidden rounded-[1.5rem] bg-gray-50 flex items-center justify-center p-4">
+              <div className="relative aspect-square w-full mb-4 overflow-hidden rounded-[1.5rem] bg-gray-50">
                  <Image
                     src={product.image_urls?.[0] || '/placeholder.png'}
                     alt={product.title}
-                    width={180}
-                    height={180}
-                    className="object-contain hover:scale-105 transition-transform duration-500"
+                    fill
+                    sizes="240px"
+                    className="object-cover hover:scale-105 transition-transform duration-500"
                     priority
                   />
                   {idx === 1 && (

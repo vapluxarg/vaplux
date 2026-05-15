@@ -14,7 +14,7 @@ export default function HeroVisual({ topProducts = [] }){
         <div className="aurora-bg-v2" />
       </div>
 
-      <div className="relative z-20 max-w-[1400px] mx-auto px-6 md:px-10 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-start pt-12 md:pt-16 lg:pt-20 pb-0">
+      <div className="relative z-20 max-w-[1400px] mx-auto px-6 md:px-10 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-start pt-10 md:pt-12 lg:pt-20 pb-0">
         
         {/* Left Content: Slogan & CTAs */}
         <div className="flex flex-col items-start text-left mt-8 md:mt-0">
@@ -73,13 +73,13 @@ export default function HeroVisual({ topProducts = [] }){
               {topProducts.slice(0, 3).map((p, i) => (
                 <div key={p.id} className="w-[280px] snap-center">
                    <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-xl shadow-blue-50/50">
-                      <div className="relative aspect-square rounded-2xl bg-gray-50 flex items-center justify-center mb-4 p-4">
-                        <Image 
-                          src={p.image_urls?.[0] || '/placeholder.png'} 
-                          alt={p.title} 
-                          width={180} 
-                          height={180} 
-                          className="object-contain" 
+                      <div className="relative aspect-square rounded-2xl bg-gray-50 overflow-hidden mb-4">
+                        <Image
+                          src={p.image_urls?.[0] || '/placeholder.png'}
+                          alt={p.title}
+                          fill
+                          sizes="280px"
+                          className="object-cover"
                           priority
                         />
                       </div>

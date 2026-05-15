@@ -100,7 +100,7 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      <div className="relative image-safe-zone !bg-white !border-gray-50 rounded-md overflow-hidden mix-blend-multiply">
+      <div className="relative image-safe-zone !p-0 !bg-white !border-gray-50 rounded-md overflow-hidden mix-blend-multiply">
         {/* Out of stock overlay */}
       {isOutOfStock && (
         <div className="absolute inset-0 z-20 bg-white/70 backdrop-blur-[1px] rounded-lg flex flex-col items-center justify-center gap-1 pointer-events-none">
@@ -131,14 +131,14 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
           </span>
         )}
         {/* Imagen primaria */}
-        <div className={`relative ${isCompact ? 'w-20 h-20 flex-shrink-0' : 'w-full h-[180px] md:h-[200px]'}`}>
+        <div className={`relative ${isCompact ? 'w-20 h-20 flex-shrink-0' : 'w-full aspect-square'}`}>
           <Image
             src={resolveSrc(product.image || product.image_urls?.[0])}
             alt={product.name || product.title}
             fill
             priority={isPriority}
             sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
-            className="product-image object-contain transition-opacity duration-300 ease-out group-hover:opacity-0"
+            className="product-image object-cover transition-opacity duration-300 ease-out group-hover:opacity-0"
             unoptimized
           />
           {/* Segunda imagen para hover */}
@@ -148,7 +148,7 @@ export default function ProductCard({ product, showSpecs = false, showCategory =
             fill
             priority={isPriority}
             sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
-            className="object-contain opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-hover:scale-[1.03]"
+            className="object-cover opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-hover:scale-[1.03]"
             unoptimized
           />
         </div>
